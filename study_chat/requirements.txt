@@ -12,3 +12,4 @@ google-auth-oauthlib
 transformers
 torch
 playwright
+python-dotenv

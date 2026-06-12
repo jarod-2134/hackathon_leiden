@@ -235,12 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (res.ok) {
                 const data = await res.json();
-                const readinessBar = document.getElementById('readiness-bar');
-                const readinessText = document.getElementById('readiness-text');
-                if (readinessBar && readinessText) {
-                    readinessBar.style.width = `${data.readiness}%`;
-                    readinessText.textContent = `${data.readiness}%`;
-                }
+
             }
         } catch (err) {
             console.error(err);
