@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | AI Study Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <!-- Landing Page -->
+    <div id="landing-page" class="view active">
+        <div class="landing-content">
+            <h1 class="logo">NEXUS</h1>
+            <p class="subtitle">Your context-aware study companion.</p>
+            <button id="enter-btn" class="btn primary-btn">Enter Interface</button>
+        </div>
+        <div class="abstract-bg"></div>
+    </div>
+
+    <!-- Main Chat Interface -->
+    <div id="chat-interface" class="view">
+        
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Knowledge Base</h2>
+            </div>
+            
+            <div class="upload-section">
+                <input type="file" id="file-upload" class="hidden-input" accept=".txt,.md,.csv,.json">
+                <button id="upload-btn" class="btn secondary-btn">Upload File</button>
+                
+                <div class="link-input-group">
+                    <input type="url" id="link-input" placeholder="Paste URL here...">
+                    <button id="add-link-btn" class="btn secondary-btn">+</button>
+                </div>
+            </div>
+
+            <div class="documents-list" id="documents-list">
+                <!-- Documents will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <div class="model-status">
+                    <span class="status-dot"></span> GROK-BETA ACTIVE
+                </div>
+                <div class="toggle-container">
+                    <label class="switch">
+                        <input type="checkbox" id="search-web-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label">Enable Web Search</span>
+                </div>
+            </div>
+
+            <div class="chat-area" id="chat-area">
+                <div class="message system-msg">
+                    <div class="avatar">N</div>
+                    <div class="bubble">System initialized. Upload your study materials or links to begin. Hallucination protocols are set to strict.</div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea id="message-input" placeholder="Query the knowledge base..." rows="1"></textarea>
+                    <button id="send-btn" class="btn send-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
