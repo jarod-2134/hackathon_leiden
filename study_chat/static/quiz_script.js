@@ -43,6 +43,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const overallPercentage = document.getElementById('overall-percentage');
     const ringFill = document.getElementById('ring-fill');
+    
+    // Dynamic Course Display
+    const activeCourseText = localStorage.getItem('nexus_active_course') || 'General';
+    const syllabusCourseNameEl = document.getElementById('syllabus-course-name');
+    if(syllabusCourseNameEl) {
+        syllabusCourseNameEl.innerHTML = `<strong>Active Course:</strong> ${activeCourseText}`;
+    }
     const mcStatBox = document.getElementById('mc-stat-box');
     const mcScoreVal = document.getElementById('mc-score-val');
     const oeStatBox = document.getElementById('oe-stat-box');
@@ -280,18 +287,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const testType = testTypeSelect.value;
         const numQuestions = parseInt(numQuestionsInput.value);
         
-        showLoading("Generating Quantum Computing Quiz...");
+        // Fetch session data
+        const sessionId = localStorage.getItem('nexus_session_id') || 'default';
+        const activeCourse = localStorage.getItem('nexus_active_course') || 'General';
+        
+        showLoading(`Generating ${activeCourse} Quiz...`);
         
         try {
             const res = await fetch('/api/quiz/generate', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Session-ID': sessionId
                 },
                 body: JSON.stringify({
                     test_type: testType,
                     num_questions: numQuestions,
-                    num_open_questions: parseInt(numOpenQuestionsInput.value)
+                    num_open_questions: parseInt(numOpenQuestionsInput.value),
+                    course: activeCourse
                 })
             });
             

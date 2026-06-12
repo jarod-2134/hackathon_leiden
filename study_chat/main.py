@@ -134,6 +134,12 @@ class ScrapeRequest(BaseModel):
     output_dir: str
     subject: Optional[str] = None
 
+class QuizGenerateRequest(BaseModel):
+    num_questions: int
+    test_type: str
+    num_open_questions: Optional[int] = None
+    course: str = "General"
+
 class CourseRequest(BaseModel):
     name: str
 
@@ -527,7 +533,10 @@ def get_quizzes():
     return {"quizzes": res}
 
 @app.post("/api/quiz/generate")
-async def generate_quiz(req: QuizGenerateRequest):
+async def generate_quiz(
+    req: QuizGenerateRequest,
+    x_session_id: str = Header(default="default-session")
+):
     global CURRENT_QUIZ
     global QUIZ_STORE
     
@@ -536,9 +545,26 @@ async def generate_quiz(req: QuizGenerateRequest):
     num_oe = req.num_open_questions if req.num_open_questions is not None else (req.num_questions // 2 if req.test_type == "mixed" else (req.num_questions if req.test_type == "open_ended" else 0))
     num_mc = req.num_questions - num_oe
     
+    # Dynamically pull the context from PDFs
+    docs = get_course_docs(x_session_id, req.course)
+    context_text = ""
+    
+    if docs:
+        context_text = "\n\n".join([d["content"] for d in docs])
+    else:
+        # Fallback to master summary if no docs in this course
+        if os.path.exists("summary/summary.md"):
+            with open("summary/summary.md", "r", encoding="utf-8") as f:
+                context_text = f.read()
+        else:
+            context_text = "No course materials uploaded yet. Please generate general questions about basic software engineering principles."
+            
+    # Truncate to avoid context limit errors (Groq max context length handling)
+    context_text = context_text[:15000]
+    
     system_prompt = (
-        "You are a professor specializing in Quantum Computing. Generate a quiz based strictly on the following course content:\n\n"
-        f"{COURSE_CONTENT}\n\n"
+        "You are an expert professor. Generate a quiz based strictly on the following course content:\n\n"
+        f"{context_text}\n\n"
         f"You must generate exactly {req.num_questions} questions: specifically generate exactly {num_mc} multiple-choice questions and {num_oe} open-ended questions.\n\n"
         "Return the output as a JSON object with a single 'questions' key. The schema of the objects in the 'questions' list MUST be:\n"
         "For multiple_choice:\n"
