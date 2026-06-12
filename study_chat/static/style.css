@@ -13,6 +13,7 @@
     --accent-text: #ffffff;      /* White text on accents */
     
     --font-main: 'Inter', sans-serif;
+    --font-logo: 'Cinzel', serif;
     --transition: all 0.2s ease;
 }
 
@@ -90,11 +91,12 @@ body {
 }
 
 .nav-brand {
+    font-size: 1.25rem;
     font-weight: 600;
-    font-size: 1.2rem;
-    color: var(--accent-primary);
+    font-family: var(--font-logo);
+    color: var(--text-main);
     text-decoration: none;
-    letter-spacing: 0.1rem;
+    letter-spacing: 0.1em;
 }
 
 .nav-links {
@@ -114,6 +116,29 @@ body {
 .nav-link:hover, .nav-link.active {
     color: var(--text-main);
     background-color: var(--bg-surface-hover);
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+.icon-btn:hover {
+    color: var(--text-main);
+    background: var(--bg-surface-hover);
+    transform: translateY(-2px);
+}
+
+.icon-btn:active {
+    transform: translateY(0);
 }
 
 /* Buttons */
@@ -200,17 +225,71 @@ body {
 }
 
 .logo {
-    font-size: 4rem;
-    letter-spacing: 0.5rem;
-    font-weight: 300;
-    margin-bottom: 1rem;
-    color: var(--text-main);
+    font-size: 3.5rem;
+    font-family: var(--font-logo);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.05em;
 }
 
 .subtitle {
     color: var(--text-muted);
     font-size: 1.1rem;
     margin-bottom: 3rem;
+}
+
+.document-item .delete-btn:hover {
+    color: #ef4444;
+}
+
+/* Custom Context Menu */
+.custom-context-menu {
+    position: absolute;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    min-width: 150px;
+    max-width: 300px;
+    overflow: hidden;
+    font-family: var(--font-main);
+}
+
+.custom-context-menu.hidden {
+    display: none;
+}
+
+.custom-context-menu .context-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+}
+
+.custom-context-menu .context-item:last-child {
+    border-bottom: none;
+}
+
+.custom-context-menu .context-item:hover {
+    background: var(--bg-surface-hover);
+}
+
+.custom-context-menu .url-display {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-muted);
+    cursor: default;
+    font-size: 0.75rem;
+}
+
+.custom-context-menu .url-display:hover {
+    background: transparent;
 }
 
 /* Chat Layout */

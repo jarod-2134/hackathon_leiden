@@ -1,15 +1,36 @@
-"use strict";
+// dnd.js
+// Handles global drag and drop for both homepage and chat
+
 document.addEventListener('DOMContentLoaded', () => {
-    const overlay = document.getElementById('dnd-overlay');
-    if (!overlay) return;
+    // Create overlay if not exists
+    let overlay = document.querySelector('.dnd-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'dnd-overlay hidden';
+        overlay.innerHTML = `
+            <div class="dnd-content">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+                <h2>Drop file to upload</h2>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
 
     let dragCounter = 0;
-    const sessionId = localStorage.getItem('nexus_session_id') || 'default';
 
     document.addEventListener('dragenter', (e) => {
         e.preventDefault();
         dragCounter++;
         overlay.classList.remove('hidden');
+    });
+
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
     });
 
     document.addEventListener('dragleave', (e) => {
@@ -20,43 +41,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.addEventListener('dragover', (e) => {
-        e.preventDefault();
-    });
-
     document.addEventListener('drop', async (e) => {
         e.preventDefault();
         dragCounter = 0;
         overlay.classList.add('hidden');
 
-        if (!e.dataTransfer || !e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+        if (!e.dataTransfer || !e.dataTransfer.files.length) return;
         const file = e.dataTransfer.files[0];
+
+        // Prompt for course
+        const isHomePage = window.location.pathname.includes('index.html') || window.location.pathname === '/';
+        let defaultCourse = 'General';
+        
+        // If in chat, try to read activeCourse from select
+        const courseSelector = document.getElementById('course-selector');
+        if (courseSelector) {
+            defaultCourse = courseSelector.value || 'General';
+        }
+
+        let courseName = prompt(`Enter course name for ${file.name}:`, defaultCourse);
+        if (!courseName || !courseName.trim()) return; // Cancelled
+        courseName = courseName.trim();
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('course', courseName);
+        
+        const sessionId = localStorage.getItem('nexus_session_id') || 'default';
 
         try {
-            // Upload the file
+            console.log(`Uploading ${file.name} to ${courseName}...`);
             const res = await fetch('/api/upload', {
                 method: 'POST',
                 headers: { 'X-Session-ID': sessionId },
                 body: formData
             });
-            
+
             if (res.ok) {
-                // If not on chat page, redirect
-                if (!window.location.href.includes('chat.html')) {
+                if (isHomePage) {
                     window.location.href = '/static/chat.html';
                 } else {
-                    // We are on chat, reload documents (a simple reload of page or calling fetchDocuments)
-                    // We can just reload to trigger the document fetch if we don't have access to chat.js scope
-                    window.location.reload();
+                    // We are in chat, trigger a reload or UI update
+                    // Since dnd is global, we can just reload the page or dispatch an event
+                    window.location.reload(); 
                 }
             } else {
-                alert('Drop upload failed');
+                alert('Upload failed');
             }
         } catch (err) {
             console.error(err);
+            alert('Upload error');
         }
     });
 });

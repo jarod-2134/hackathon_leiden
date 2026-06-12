@@ -1,7 +1,7 @@
 import os
 import io
 import uuid
-from fastapi import FastAPI, UploadFile, File, Header, HTTPException
+from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -36,16 +36,23 @@ client = OpenAI(
 )
 
 # --- IN-MEMORY STORAGE ---
-# Structure: { session_id: [ {"id": "uuid", "source_name": "filename", "source_type": "file|url", "content": "text..."} ] }
-MEMORY_STORE: Dict[str, List[dict]] = {}
+# Structure: { session_id: { course_name: [ {"id": "uuid", "source_name": "filename", "source_type": "file|url", "content": "text..."} ] } }
+MEMORY_STORE: Dict[str, Dict[str, List[dict]]] = {}
 
-def get_session_docs(session_id: str):
+def get_session_courses(session_id: str):
     if session_id not in MEMORY_STORE:
-        MEMORY_STORE[session_id] = []
+        MEMORY_STORE[session_id] = {"General": []}
     return MEMORY_STORE[session_id]
+
+def get_course_docs(session_id: str, course_name: str):
+    courses = get_session_courses(session_id)
+    if course_name not in courses:
+        courses[course_name] = []
+    return courses[course_name]
 
 class LinkRequest(BaseModel):
     url: str
+    course: str = "General"
 
 class Message(BaseModel):
     role: str
@@ -54,10 +61,15 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     messages: List[Message]
     search_web: bool = False
+    course: str = "General"
+
+class CourseRequest(BaseModel):
+    name: str
 
 @app.post("/api/upload")
 async def upload_file(
     file: UploadFile = File(...), 
+    course: str = Form(default="General"),
     x_session_id: str = Header(default="default-session")
 ):
     try:
@@ -80,7 +92,7 @@ async def upload_file(
             "content": text_content
         }
         
-        docs = get_session_docs(x_session_id)
+        docs = get_course_docs(x_session_id, course)
         docs.append(doc)
         
         return {"id": doc_id, "source_name": doc["source_name"], "source_type": doc["source_type"]}
@@ -113,22 +125,34 @@ async def add_link(
             "content": text_content
         }
         
-        docs = get_session_docs(x_session_id)
+        docs = get_course_docs(x_session_id, link_req.course)
         docs.append(doc)
         
         return {"id": doc_id, "source_name": doc["source_name"], "source_type": doc["source_type"]}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.post("/api/courses")
+def create_course(req: CourseRequest, x_session_id: str = Header(default="default-session")):
+    courses = get_session_courses(x_session_id)
+    if req.name not in courses:
+        courses[req.name] = []
+    return {"success": True, "courses": list(courses.keys())}
+
 @app.get("/api/documents")
 def get_documents(x_session_id: str = Header(default="default-session")):
-    docs = get_session_docs(x_session_id)
-    return [{"id": d["id"], "source_name": d["source_name"], "source_type": d["source_type"]} for d in docs]
+    courses = get_session_courses(x_session_id)
+    # Strip full content to save bandwidth
+    safe_courses = {}
+    for c_name, c_docs in courses.items():
+        safe_courses[c_name] = [{"id": d["id"], "source_name": d["source_name"], "source_type": d["source_type"]} for d in c_docs]
+    return safe_courses
 
 @app.delete("/api/documents/{doc_id}")
 def delete_document(doc_id: str, x_session_id: str = Header(default="default-session")):
-    docs = get_session_docs(x_session_id)
-    MEMORY_STORE[x_session_id] = [d for d in docs if d["id"] != doc_id]
+    courses = get_session_courses(x_session_id)
+    for c_name, c_docs in courses.items():
+        courses[c_name] = [d for d in c_docs if d["id"] != doc_id]
     return {"success": True}
 
 @app.post("/api/chat")
@@ -136,7 +160,7 @@ async def chat(
     request: ChatRequest, 
     x_session_id: str = Header(default="default-session")
 ):
-    docs = get_session_docs(x_session_id)
+    docs = get_course_docs(x_session_id, request.course)
     context_text = "\n\n".join([f"Source: {d['source_name']}\nContent: {d['content']}" for d in docs])
     
     system_prompt = (

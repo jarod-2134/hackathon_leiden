@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus | Chat</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>SokraText | Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -16,7 +16,7 @@
     </div>
 
     <nav class="navbar">
-        <a href="/static/index.html" class="nav-brand">NEXUS</a>
+        <a href="/static/index.html" class="nav-brand">SOKRATEXT</a>
         <div class="nav-links">
             <a href="/static/index.html" class="nav-link">Home</a>
             <a href="/static/chat.html" class="nav-link active">Chat</a>
@@ -33,12 +33,18 @@
         </div>
 
         <div class="sidebar" style="position: relative; z-index: 2;">
-            <div class="sidebar-header">
-                <h2>Knowledge Base</h2>
+            <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;">
+                <h2 style="margin: 0; transform: translateY(-1px);">Courses</h2>
+                <button id="add-course-btn" class="icon-btn" title="Add Course" style="position: relative; z-index: 10; padding: 0.25rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
             </div>
             
-            <div class="documents-list" id="documents-list">
-                <!-- Documents inserted here -->
+            <div class="sidebar-content" id="doc-list-container">
+                <!-- Accordions for Courses will be populated here -->
             </div>
         </div>
 
@@ -55,51 +61,67 @@
             </div>
 
             <div class="input-area">
-                <div class="input-wrapper">
-                    <div class="menu-container">
-                        <button id="menu-btn" class="btn icon-btn" title="Add Material">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                        </button>
-                        <div id="popover-menu" class="popover-menu hidden">
-                            <input type="file" id="file-upload" class="hidden-input" accept=".txt,.md,.csv,.json,.pdf">
-                            <button id="menu-add-file" class="menu-item">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                                Add File
-                            </button>
-                            <button id="menu-add-drive" class="menu-item">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 22 22 22"></polygon></svg>
-                                Google Drive
-                            </button>
-                            <button id="menu-add-github" class="menu-item">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-                                GitHub
-                            </button>
+                <div class="input-wrapper" style="flex-direction: column; align-items: stretch; gap: 0.5rem; background: transparent; border: none; padding: 0;">
+                    
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <!-- Course Context Selector -->
+                        <div class="course-context-selector" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Active Context:</span>
+                            <select id="course-selector" class="theme-select" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;">
+                                <option value="General">General</option>
+                            </select>
+                        </div>
+                        
+                        <div class="inline-toggles">
+                            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-right: 0.5rem;">Web Search</span>
+                            <label class="switch inline-switch">
+                                <input type="checkbox" id="search-web-toggle">
+                                <span class="slider"></span>
+                            </label>
                         </div>
                     </div>
-                    
-                    <textarea id="message-input" placeholder="Query the knowledge base..." rows="1"></textarea>
-                    
-                    <div class="inline-toggles" style="gap: 0.5rem;">
-                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;">Web Search</span>
-                        <label class="switch inline-switch" title="Enable Web Search">
-                            <input type="checkbox" id="search-web-toggle">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
 
-                    <button id="send-btn" class="btn send-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-base); border: 1px solid var(--border); border-radius: 4px; padding: 0.5rem;">
+                        <div class="menu-container" style="position: relative;">
+                            <button class="icon-btn" id="menu-btn" title="Add Material">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="1"></circle>
+                                    <circle cx="12" cy="5" r="1"></circle>
+                                    <circle cx="12" cy="19" r="1"></circle>
+                                </svg>
+                            </button>
+                            <div id="popover-menu" class="popover-menu hidden">
+                                <input type="file" id="file-upload" class="hidden-input" accept=".txt,.md,.csv,.json,.pdf">
+                                <button id="menu-add-file" class="menu-item">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                    Add File
+                                </button>
+                                <button id="menu-add-drive" class="menu-item">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 22 22 22"></polygon></svg>
+                                    Google Drive
+                                </button>
+                                <button id="menu-add-github" class="menu-item">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                                    GitHub
+                                </button>
+                            </div>
+                        </div>
+                        <textarea id="message-input" rows="1" placeholder="Query the active context..." style="margin: 0; align-self: center;"></textarea>
+                        
+                        <button class="icon-btn send-btn" id="send-btn" title="Send Message">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="/static/theme.js"></script>
-    <script src="/static/chat.js"></script>
-    <script src="/static/dnd.js"></script>
+    <script src="/static/theme.js?v=3"></script>
+    <script src="/static/chat.js?v=3"></script>
+    <script src="/static/dnd.js?v=3"></script>
 </body>
 </html>
