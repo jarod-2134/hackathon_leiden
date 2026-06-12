@@ -10,7 +10,10 @@
 <body>
     <nav class="navbar">
         <div style="display: flex; align-items: center; gap: 1rem;">
-            <a href="/static/index.html" class="nav-brand">SOKRATEXT</a>
+            <a href="/static/index.html" class="nav-brand">
+                <img src="/static/socrates.png" alt="SokraText" class="brand-logo">
+                <span>SOKRATEXT</span>
+            </a>
             <span style="color: var(--border); font-weight: 300; font-size: 1.2rem;">|</span>
         </div>
         <div class="nav-links" style="align-items: center;">
@@ -65,8 +68,39 @@
                 </label>
             </div>
             
+            <!-- Active Course Contexts Inspector -->
+            <div style="margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+                <h3 style="margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Active Course Contexts</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">See the documents, links, and text values open inside each course syllabus.</p>
+                <div id="inspector-container" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                    <p style="color: var(--text-muted); font-style: italic; font-size: 0.95rem;">Loading active courses...</p>
+                </div>
+            </div>
+            
+            <!-- Reset User Data Section -->
+            <div style="margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
+                <div>
+                    <h3 style="color: #ef4444; font-weight: 600; margin-bottom: 0.25rem;">Reset User Data</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Permanently clear all course materials, links, chat logs, and readiness scores.</p>
+                </div>
+                <button id="reset-data-btn" class="btn" style="border-color: #ef4444; color: #ef4444; background: transparent; flex-shrink: 0;">Reset All Data</button>
+            </div>
+            
             <div style="margin-top: 3rem; text-align: center;">
                 <p style="color: var(--text-muted); font-size: 0.8rem;">Session ID is managed automatically. Future gamification features will appear here.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Content Preview Modal -->
+    <div id="preview-modal" class="modal">
+        <div class="modal-content" style="background-color: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; width: 85%; max-width: 800px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; gap: 1rem;">
+                <h3 id="preview-modal-title" style="margin: 0; font-family: var(--font-logo); color: var(--accent-primary); word-break: break-all; text-align: left; font-size: 1.15rem; font-weight: 600;">Document Preview</h3>
+                <span id="close-preview-modal" style="font-size: 1.75rem; font-weight: bold; cursor: pointer; color: var(--text-muted); line-height: 1; padding: 0 0.25rem;">&times;</span>
+            </div>
+            <div id="preview-modal-body" style="flex: 1; overflow-y: auto; font-family: var(--font-main); font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-main); background: var(--bg-base); padding: 1rem; border-radius: 6px; border: 1px solid var(--border); text-align: left;">
+                Loading content...
             </div>
         </div>
     </div>
