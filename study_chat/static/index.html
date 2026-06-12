@@ -8,75 +8,39 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <div id="dnd-overlay" class="dnd-overlay hidden">
+        <div class="dnd-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <h2>Drop files to upload instantly</h2>
+        </div>
+    </div>
 
-    <!-- Landing Page -->
-    <div id="landing-page" class="view active">
+    <nav class="navbar">
+        <a href="/static/index.html" class="nav-brand">NEXUS</a>
+        <div class="nav-links">
+            <a href="/static/index.html" class="nav-link active">Home</a>
+            <a href="/static/chat.html" class="nav-link">Chat</a>
+            <a href="/static/settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+    <div class="page-container" style="position: relative;">
+        <!-- Dynamic Background -->
+        <div class="dynamic-bg">
+            <div class="floating-shape s1"></div>
+            <div class="floating-shape s2"></div>
+            <div class="floating-shape s3"></div>
+        </div>
+
         <div class="landing-content">
             <h1 class="logo">NEXUS</h1>
             <p class="subtitle">Your context-aware study companion.</p>
-            <button id="enter-btn" class="btn primary-btn">Enter Interface</button>
-        </div>
-        <div class="abstract-bg"></div>
-    </div>
-
-    <!-- Main Chat Interface -->
-    <div id="chat-interface" class="view">
-        
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h2>Knowledge Base</h2>
-            </div>
-            
-            <div class="upload-section">
-                <input type="file" id="file-upload" class="hidden-input" accept=".txt,.md,.csv,.json">
-                <button id="upload-btn" class="btn secondary-btn">Upload File</button>
-                
-                <div class="link-input-group">
-                    <input type="url" id="link-input" placeholder="Paste URL here...">
-                    <button id="add-link-btn" class="btn secondary-btn">+</button>
-                </div>
-            </div>
-
-            <div class="documents-list" id="documents-list">
-                <!-- Documents will be dynamically inserted here -->
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="header">
-                <div class="model-status">
-                    <span class="status-dot"></span> GROK-BETA ACTIVE
-                </div>
-                <div class="toggle-container">
-                    <label class="switch">
-                        <input type="checkbox" id="search-web-toggle">
-                        <span class="slider round"></span>
-                    </label>
-                    <span class="toggle-label">Enable Web Search</span>
-                </div>
-            </div>
-
-            <div class="chat-area" id="chat-area">
-                <div class="message system-msg">
-                    <div class="avatar">N</div>
-                    <div class="bubble">System initialized. Upload your study materials or links to begin. Hallucination protocols are set to strict.</div>
-                </div>
-            </div>
-
-            <div class="input-area">
-                <div class="input-wrapper">
-                    <textarea id="message-input" placeholder="Query the knowledge base..." rows="1"></textarea>
-                    <button id="send-btn" class="btn send-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            <a href="/static/chat.html" class="btn primary-btn" style="position: relative; z-index: 2;">Enter Interface</a>
         </div>
     </div>
 
-    <script src="/static/script.js"></script>
+    <!-- Theme Initializer & DND -->
+    <script src="/static/theme.js"></script>
+    <script src="/static/dnd.js"></script>
 </body>
 </html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/static/index.html" class="nav-brand">NEXUS</a>
+        <div class="nav-links">
+            <a href="/static/index.html" class="nav-link">Home</a>
+            <a href="/static/chat.html" class="nav-link">Chat</a>
+            <a href="/static/settings.html" class="nav-link active">Settings</a>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="settings-container">
+            <h2 style="margin-bottom: 2rem; color: var(--accent-primary);">Preferences</h2>
+            
+            <div class="settings-group">
+                <div>
+                    <h3>Theme Selection</h3>
+                    <p>Choose your preferred color scheme.</p>
+                </div>
+                <select id="theme-selector" class="theme-select">
+                    <option value="light">Light (Default)</option>
+                    <option value="dark">Dark</option>
+                    <option value="ocean">Ocean</option>
+                    <option value="forest">Forest</option>
+                </select>
+            </div>
+
+            <div class="settings-group">
+                <div>
+                    <h3>Enable Web Search</h3>
+                    <p>Allow the AI to use outside knowledge if context is insufficient.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="search-web-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div style="margin-top: 3rem; text-align: center;">
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Session ID is managed automatically. Future gamification features will appear here.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Initializer -->
+    <script src="/static/theme.js"></script>
+    <script src="/static/settings.js"></script>
+</body>
+</html>

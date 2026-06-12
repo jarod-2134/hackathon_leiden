@@ -12,6 +12,7 @@ from openai import OpenAI
 from pypdf import PdfReader
 
 from drive_service import extract_drive_content
+from github_service import extract_github_content
 
 app = FastAPI()
 
@@ -95,6 +96,8 @@ async def add_link(
     try:
         if "drive.google.com" in url:
             text_content = extract_drive_content(url)
+        elif "github.com" in url or "raw.githubusercontent.com" in url:
+            text_content = extract_github_content(url)
         else:
             # Standard URL scraping
             response = requests.get(url, timeout=10)

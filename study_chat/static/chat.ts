@@ -1,44 +1,44 @@
+// chat.ts
+// Handles the chat interface logic.
+
+interface ChatMessage {
+    role: string;
+    content: string;
+}
+
+interface DocumentInfo {
+    id: string;
+    source_name: string;
+    source_type: string;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Generate a simple session ID for this tab/user
-    const sessionId = 'sess-' + Math.random().toString(36).substring(2, 15);
+    // Type casting elements
+    const chatArea = document.getElementById('chat-area') as HTMLDivElement;
+    const messageInput = document.getElementById('message-input') as HTMLTextAreaElement;
+    const sendBtn = document.getElementById('send-btn') as HTMLButtonElement;
+    
+    const fileUpload = document.getElementById('file-upload') as HTMLInputElement;
+    const uploadBtn = document.getElementById('upload-btn') as HTMLButtonElement;
+    const linkInput = document.getElementById('link-input') as HTMLInputElement;
+    const addLinkBtn = document.getElementById('add-link-btn') as HTMLButtonElement;
+    const documentsList = document.getElementById('documents-list') as HTMLDivElement;
 
-    // Views
-    const landingPage = document.getElementById('landing-page');
-    const chatInterface = document.getElementById('chat-interface');
-    const enterBtn = document.getElementById('enter-btn');
+    let chatHistory: ChatMessage[] = [];
+    const sessionId = localStorage.getItem('nexus_session_id') || 'default';
 
-    // UI Elements
-    const chatArea = document.getElementById('chat-area');
-    const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
-    const searchWebToggle = document.getElementById('search-web-toggle');
-    const statusDot = document.querySelector('.status-dot');
+    const searchWebToggle = document.getElementById('search-web-toggle') as HTMLInputElement;
+    const savedSearchWeb = localStorage.getItem('nexus_search_web');
+    if (savedSearchWeb === 'true') {
+        searchWebToggle.checked = true;
+    }
 
-    // Knowledge Base Elements
-    const fileUpload = document.getElementById('file-upload');
-    const uploadBtn = document.getElementById('upload-btn');
-    const linkInput = document.getElementById('link-input');
-    const addLinkBtn = document.getElementById('add-link-btn');
-    const documentsList = document.getElementById('documents-list');
-
-    let chatHistory = [];
-
-    // Switch view
-    enterBtn.addEventListener('click', () => {
-        landingPage.classList.remove('active');
-        chatInterface.classList.add('active');
-        fetchDocuments();
-    });
-
-    // Toggle Web Search Visuals
-    searchWebToggle.addEventListener('change', (e) => {
-        if(e.target.checked) {
-            statusDot.style.backgroundColor = 'var(--text-main)';
-            statusDot.style.boxShadow = '0 0 8px var(--text-main)';
-            appendSystemMessage("Web Search enabled. The model will use external knowledge if context is insufficient.");
+    searchWebToggle.addEventListener('change', (e: Event) => {
+        const target = e.target as HTMLInputElement;
+        localStorage.setItem('nexus_search_web', target.checked ? 'true' : 'false');
+        if(target.checked) {
+            appendWarningMessage("WARNING: Web Search Enabled. Requests may now go outside of the provided course material. Hallucination risk increased.");
         } else {
-            statusDot.style.backgroundColor = 'var(--text-muted)';
-            statusDot.style.boxShadow = 'none';
             appendSystemMessage("Web Search disabled. Strict hallucination protocol active.");
         }
     });
@@ -52,9 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // File Upload
     uploadBtn.addEventListener('click', () => fileUpload.click());
     
-    fileUpload.addEventListener('change', async (e) => {
-        if (!e.target.files.length) return;
-        const file = e.target.files[0];
+    fileUpload.addEventListener('change', async (e: Event) => {
+        const target = e.target as HTMLInputElement;
+        if (!target.files || !target.files.length) return;
+        const file = target.files[0];
         
         const formData = new FormData();
         formData.append('file', file);
@@ -63,9 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadBtn.textContent = 'Uploading...';
             const res = await fetch('/api/upload', {
                 method: 'POST',
-                headers: {
-                    'X-Session-ID': sessionId
-                },
+                headers: { 'X-Session-ID': sessionId },
                 body: formData
             });
             if (res.ok) {
@@ -115,18 +114,16 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchDocuments() {
         try {
             const res = await fetch('/api/documents', {
-                headers: {
-                    'X-Session-ID': sessionId
-                }
+                headers: { 'X-Session-ID': sessionId }
             });
-            const docs = await res.json();
+            const docs: DocumentInfo[] = await res.json();
             renderDocuments(docs);
         } catch (err) {
             console.error(err);
         }
     }
 
-    function renderDocuments(docs) {
+    function renderDocuments(docs: DocumentInfo[]) {
         documentsList.innerHTML = '';
         docs.forEach(doc => {
             const div = document.createElement('div');
@@ -138,26 +135,22 @@ document.addEventListener('DOMContentLoaded', () => {
             documentsList.appendChild(div);
         });
 
-        // Add delete listeners
         document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const id = e.target.getAttribute('data-id');
-                await deleteDocument(id);
+            btn.addEventListener('click', async (e: Event) => {
+                const target = e.target as HTMLButtonElement;
+                const id = target.getAttribute('data-id');
+                if (id) await deleteDocument(id);
             });
         });
     }
 
-    async function deleteDocument(id) {
+    async function deleteDocument(id: string) {
         try {
             const res = await fetch(`/api/documents/${id}`, { 
                 method: 'DELETE',
-                headers: {
-                    'X-Session-ID': sessionId
-                }
+                headers: { 'X-Session-ID': sessionId }
             });
-            if (res.ok) {
-                fetchDocuments();
-            }
+            if (res.ok) fetchDocuments();
         } catch(err) {
             console.error(err);
         }
@@ -165,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Chat Logic
     sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', (e) => {
+    messageInput.addEventListener('keydown', (e: KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
@@ -176,17 +169,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const content = messageInput.value.trim();
         if (!content) return;
 
-        // UI Update
         appendMessage('user', content);
         messageInput.value = '';
         messageInput.style.height = 'auto';
         chatHistory.push({ role: 'user', content });
 
-        // Show typing indicator
         const typingId = appendTypingIndicator();
 
         try {
-            const search_web = searchWebToggle.checked;
+            const search_web = localStorage.getItem('nexus_search_web') === 'true';
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 
@@ -212,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function appendMessage(role, text) {
+    function appendMessage(role: string, text: string) {
         const div = document.createElement('div');
         div.className = `message ${role === 'user' ? 'user-msg' : 'assistant-msg'}`;
         
@@ -230,34 +221,47 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollToBottom();
     }
 
-    function appendSystemMessage(text) {
+    function appendSystemMessage(text: string) {
         const div = document.createElement('div');
         div.className = 'message system-msg';
         div.innerHTML = `
-            <div class="avatar">N</div>
-            <div class="bubble" style="color: var(--text-muted); font-style: italic; background: transparent; border: none;">
-                [SYSTEM] ${text}
+            <div class="avatar" style="background: transparent; color: var(--text-muted); border: none;">[SYS]</div>
+            <div class="bubble" style="color: var(--text-muted); font-style: italic; background: transparent; border: none; padding-left: 0;">
+                ${text}
             </div>
         `;
         chatArea.appendChild(div);
         scrollToBottom();
     }
 
-    function appendTypingIndicator() {
+    function appendWarningMessage(text: string) {
+        const div = document.createElement('div');
+        div.className = 'message warning-msg';
+        div.innerHTML = `
+            <div class="avatar" style="background: #ef4444; color: white; border: none; font-weight: bold;">!</div>
+            <div class="bubble" style="color: #ef4444; font-weight: 600; background: #fef2f2; border: 2px solid #ef4444;">
+                ${text}
+            </div>
+        `;
+        chatArea.appendChild(div);
+        scrollToBottom();
+    }
+
+    function appendTypingIndicator(): string {
         const id = 'typing-' + Date.now();
         const div = document.createElement('div');
         div.className = 'message assistant-msg';
         div.id = id;
         div.innerHTML = `
             <div class="avatar">N</div>
-            <div class="bubble" style="color: var(--text-muted);">Analyzing context...</div>
+            <div class="bubble" style="color: var(--text-muted);">Analyzing...</div>
         `;
         chatArea.appendChild(div);
         scrollToBottom();
         return id;
     }
 
-    function removeMessage(id) {
+    function removeMessage(id: string) {
         const el = document.getElementById(id);
         if (el) el.remove();
     }
@@ -265,4 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function scrollToBottom() {
         chatArea.scrollTop = chatArea.scrollHeight;
     }
+
+    // Initial Fetch
+    fetchDocuments();
 });
