@@ -23,3 +23,7 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+
+files/
+summary/
+local_model/
