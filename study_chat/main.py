@@ -907,4 +907,52 @@ def delete_all():
             return {"status": "error", "message": "No courses found to delete."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@app.post("/api/reset")
+def reset_all_user_data(x_session_id: str = Header(default="default-session")):
+    global MEMORY_STORE, QUIZ_STORE, CURRENT_QUIZ
+    
+    # 1. Clear in-memory state
+    MEMORY_STORE.clear()
+    QUIZ_STORE.clear()
+    CURRENT_QUIZ.clear()
+    
+    # Re-initialize current session structure
+    MEMORY_STORE[x_session_id] = {"General": []}
+    
+    # 2. Reset persistent state files
+    try:
+        if os.path.exists(CHAT_HISTORY_FILE):
+            save_json(CHAT_HISTORY_FILE, {})
+        if os.path.exists(USER_STATE_FILE):
+            save_json(USER_STATE_FILE, {})
+    except Exception as e:
+        print(f"Error resetting database JSON files: {e}")
+        
+    # 3. Clear file folders
+    import shutil
+    base_dir = "files"
+    try:
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+            os.makedirs(base_dir, exist_ok=True)
+    except Exception as e:
+        print(f"Error resetting files directory: {e}")
+        
+    return {"status": "success", "message": "All user data, chat history, and files have been successfully reset."}
+
+@app.get("/api/documents/{doc_id}/content")
+def get_document_content(doc_id: str, x_session_id: str = Header(default="default-session")):
+    courses = get_session_courses(x_session_id)
+    for c_name, c_docs in courses.items():
+        for doc in c_docs:
+            if doc["id"] == doc_id:
+                return {
+                    "id": doc["id"],
+                    "source_name": doc["source_name"],
+                    "source_type": doc["source_type"],
+                    "content": doc.get("content", "")
+                }
+    raise HTTPException(status_code=404, detail="Document not found")
+
     
