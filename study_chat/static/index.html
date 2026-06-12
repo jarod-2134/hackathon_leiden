@@ -16,11 +16,20 @@
     </div>
 
     <nav class="navbar">
-        <a href="/static/index.html" class="nav-brand">SOKRATEXT</a>
-        <div class="nav-links">
-            <a href="/static/index.html" class="nav-link active">Home</a>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="/static/index.html" class="nav-brand">SOKRATEXT</a>
+            <span style="color: var(--border); font-weight: 300; font-size: 1.2rem;">|</span>
+        </div>
+        <div class="nav-links" style="align-items: center;">
             <a href="/static/chat.html" class="nav-link">Chat</a>
+            <a href="/quiz" class="nav-link">Quiz</a>
             <a href="/static/settings.html" class="nav-link">Settings</a>
+            <select id="theme-selector" class="theme-select" style="margin-left: 1rem; padding: 0.25rem 0.5rem; font-size: 0.85rem; border-color: transparent; cursor: pointer; background: var(--bg-surface-hover);">
+                <option value="light">Light Theme</option>
+                <option value="dark">Dark Theme</option>
+                <option value="ocean">Ocean Theme</option>
+                <option value="forest">Forest Theme</option>
+            </select>
         </div>
     </nav>
 

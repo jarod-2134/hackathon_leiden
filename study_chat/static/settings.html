@@ -9,12 +9,20 @@
 </head>
 <body>
     <nav class="navbar">
-        <a href="/static/index.html" class="nav-brand">SOKRATEXT</a>
-        <div class="nav-links">
-            <a href="/static/index.html" class="nav-link">Home</a>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="/static/index.html" class="nav-brand">SOKRATEXT</a>
+            <span style="color: var(--border); font-weight: 300; font-size: 1.2rem;">|</span>
+        </div>
+        <div class="nav-links" style="align-items: center;">
             <a href="/static/chat.html" class="nav-link">Chat</a>
             <a href="/quiz" class="nav-link">Quiz</a>
             <a href="/static/settings.html" class="nav-link active">Settings</a>
+            <select id="theme-selector" class="theme-select" style="margin-left: 1rem; padding: 0.25rem 0.5rem; font-size: 0.85rem; border-color: transparent; cursor: pointer; background: var(--bg-surface-hover);">
+                <option value="light">Light Theme</option>
+                <option value="dark">Dark Theme</option>
+                <option value="ocean">Ocean Theme</option>
+                <option value="forest">Forest Theme</option>
+            </select>
         </div>
     </nav>
 
@@ -24,15 +32,26 @@
             
             <div class="settings-group">
                 <div>
-                    <h3>Theme Selection</h3>
-                    <p>Choose your preferred color scheme.</p>
+                    <h3>Daily Study Goal</h3>
+                    <p>Set a target time for active learning sessions.</p>
                 </div>
-                <select id="theme-selector" class="theme-select">
-                    <option value="light">Light (Default)</option>
-                    <option value="dark">Dark</option>
-                    <option value="ocean">Ocean</option>
-                    <option value="forest">Forest</option>
+                <select id="daily-goal-selector" class="theme-select">
+                    <option value="5">5 Minutes</option>
+                    <option value="15">15 Minutes</option>
+                    <option value="30">30 Minutes</option>
+                    <option value="60">1 Hour</option>
                 </select>
+            </div>
+
+            <div class="settings-group">
+                <div>
+                    <h3>Push Notifications</h3>
+                    <p>Receive reminders and session updates.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="notifications-toggle">
+                    <span class="slider"></span>
+                </label>
             </div>
 
             <div class="settings-group">

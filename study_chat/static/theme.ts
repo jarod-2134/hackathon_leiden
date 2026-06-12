@@ -1,6 +1,5 @@
 // theme.ts
-// Handles the global theme state logic.
-// This is loaded in the <head> or at start of <body> on all pages.
+// Small script to initialize the theme and session ID globally before rendering to prevent flashing
 
 (function() {
     const savedTheme = localStorage.getItem('nexus_theme');
@@ -9,7 +8,6 @@
     if (savedTheme === 'forest') document.body.classList.add('theme-forest');
 })();
 
-// Global session ID management
 function getSessionId(): string {
     let sid = localStorage.getItem('nexus_session_id');
     if (!sid) {
@@ -19,5 +17,25 @@ function getSessionId(): string {
     return sid;
 }
 
-// Ensure it exists on load
+// Initialize session immediately
 getSessionId();
+
+document.addEventListener('DOMContentLoaded', () => {
+    const themeSelector = document.getElementById('theme-selector') as HTMLSelectElement;
+    if (themeSelector) {
+        const savedTheme = localStorage.getItem('nexus_theme') || 'light';
+        themeSelector.value = savedTheme;
+        
+        themeSelector.addEventListener('change', (e: Event) => {
+            const target = e.target as HTMLSelectElement;
+            const newTheme = target.value;
+            
+            document.body.classList.remove('dark-theme', 'theme-ocean', 'theme-forest');
+            if (newTheme === 'dark') document.body.classList.add('dark-theme');
+            else if (newTheme === 'ocean') document.body.classList.add('theme-ocean');
+            else if (newTheme === 'forest') document.body.classList.add('theme-forest');
+            
+            localStorage.setItem('nexus_theme', newTheme);
+        });
+    }
+});
