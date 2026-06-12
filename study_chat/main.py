@@ -12,10 +12,7 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 from pypdf import PdfReader
-from transformers import pipeline
 
-from scripts.scraper import scrape_web_files
-from scripts.summariser import summariser
 
 COURSE_CONTENT = (
     "Introduction to Quantum Computing: This course covers the fundamental concepts of quantum mechanics applied to "
@@ -56,6 +53,52 @@ client = OpenAI(
 # --- IN-MEMORY STORAGE ---
 # Structure: { session_id: { course_name: [ {"id": "uuid", "source_name": "filename", "source_type": "file|url", "content": "text..."} ] } }
 MEMORY_STORE: Dict[str, Dict[str, List[dict]]] = {}
+
+# --- PERSISTENT STORAGE ---
+DATA_DIR = "user_chat_history"
+os.makedirs(DATA_DIR, exist_ok=True)
+CHAT_HISTORY_FILE = os.path.join(DATA_DIR, "chat_history.json")
+USER_STATE_FILE = os.path.join(DATA_DIR, "user_state.json")
+
+def load_json(filepath):
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            try:
+                return json.load(f)
+            except:
+                pass
+    return {}
+
+def save_json(filepath, data):
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+
+def get_chat_history(session_id: str, course_name: str):
+    data = load_json(CHAT_HISTORY_FILE)
+    if session_id not in data:
+        return []
+    return data[session_id].get(course_name, [])
+
+def append_chat_message(session_id: str, course_name: str, message: dict):
+    data = load_json(CHAT_HISTORY_FILE)
+    if session_id not in data:
+        data[session_id] = {}
+    if course_name not in data[session_id]:
+        data[session_id][course_name] = []
+    data[session_id][course_name].append(message)
+    save_json(CHAT_HISTORY_FILE, data)
+
+def get_user_state(session_id: str):
+    data = load_json(USER_STATE_FILE)
+    return data.get(session_id, {"readiness": 0, "quiz_scores": []})
+
+def update_user_state(session_id: str, new_score: int):
+    data = load_json(USER_STATE_FILE)
+    state = data.get(session_id, {"readiness": 0, "quiz_scores": []})
+    state["quiz_scores"].append(new_score)
+    state["readiness"] = round(sum(state["quiz_scores"]) / len(state["quiz_scores"]))
+    data[session_id] = state
+    save_json(USER_STATE_FILE, data)
 
 def get_session_courses(session_id: str):
     if session_id not in MEMORY_STORE:
@@ -174,6 +217,15 @@ def delete_document(doc_id: str, x_session_id: str = Header(default="default-ses
         courses[c_name] = [d for d in c_docs if d["id"] != doc_id]
     return {"success": True}
 
+@app.get("/api/user/state")
+def get_user_state_api(x_session_id: str = Header(default="default-session")):
+    return get_user_state(x_session_id)
+
+@app.get("/api/chat/history")
+def get_chat_history_api(course: str = "General", x_session_id: str = Header(default="default-session")):
+    messages = get_chat_history(x_session_id, course)
+    return {"messages": messages}
+
 @app.post("/api/chat")
 async def chat(
     request: ChatRequest, 
@@ -201,13 +253,17 @@ async def chat(
     for msg in request.messages:
         messages.append({"role": msg.role, "content": msg.content})
 
+    if request.messages and request.messages[-1].role == 'user':
+        append_chat_message(x_session_id, request.course, {"role": "user", "content": request.messages[-1].content})
+
     try:
         response = client.chat.completions.create(
             model="grok-beta",
             messages=messages,
             temperature=0.3
         )
-        assistant_content = response.choices[0].message.content
+        ans_content = response.choices[0].message.content
+        append_chat_message(x_session_id, request.course, {"role": "assistant", "content": ans_content})
         
         inline_quiz = None
         if request.auto_quiz:
@@ -219,13 +275,15 @@ async def chat(
             except Exception as e:
                 print(f"Error generating inline quiz: {e}")
                 
-        return {"role": "assistant", "content": assistant_content, "inline_quiz": inline_quiz}
+        return {"role": "assistant", "content": ans_content, "inline_quiz": inline_quiz}
     except Exception as e:
         # Fallback for hackathon testing without an API key
         if "AuthenticationError" in str(type(e)) or "Connection" in str(type(e)):
+            ans_content = f"[MOCK RESPONSE] Could not connect to LLM API. Context docs loaded: {len(docs)}. Error: {str(e)}"
+            append_chat_message(x_session_id, request.course, {"role": "assistant", "content": ans_content})
             return {
                 "role": "assistant", 
-                "content": f"[MOCK RESPONSE] Could not connect to LLM API. Context docs loaded: {len(docs)}. Error: {str(e)}"
+                "content": ans_content
             }
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -506,7 +564,7 @@ async def generate_quiz(req: QuizGenerateRequest):
     }
 
 @app.post("/api/quiz/submit")
-async def submit_quiz(req: QuizSubmitRequest):
+async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default="default-session")):
     global CURRENT_QUIZ
     
     quiz_context = CURRENT_QUIZ
@@ -648,6 +706,8 @@ async def submit_quiz(req: QuizSubmitRequest):
     else:
         overall_score = 0
 
+    update_user_state(x_session_id, overall_score)
+
     # Generate overall summary paragraph using Grok, fallback to local-based if Grok is down
     summary_obj = {}
     try:
@@ -736,6 +796,7 @@ async def submit_quiz(req: QuizSubmitRequest):
 
 @app.post("/api/scrape")
 def scrape_books(scrape_req: ScrapeRequest):
+    from scripts.scraper import scrape_web_files
     TARGET_URL = scrape_req.url
     OUTPUT_DIR = scrape_req.output_dir
     SUBJECT = scrape_req.subject or "General"
@@ -744,11 +805,8 @@ def scrape_books(scrape_req: ScrapeRequest):
 
 @app.get("/api/summarize")
 def summarize_all(background_tasks: BackgroundTasks):
-    # Inject background_tasks into the function arguments, 
-    # then pass your heavy function into it without the parenthesis ()
+    from scripts.summariser import summariser
     background_tasks.add_task(summariser)
-    
-    # This returns INSTANTLY to the user/frontend (under 5 milliseconds)
     return {
         "status": "processing", 
         "message": "Summarization task started in the background. Check server logs for progress."
@@ -756,6 +814,7 @@ def summarize_all(background_tasks: BackgroundTasks):
 
 @app.get("/api/get_model")
 def get_model():
+    from transformers import pipeline
     pipe = pipeline("text-generation", model="facebook/bart-large-cnn", device="cpu")
     pipe.save_pretrained("./local_model")
     return {"status": "success", "message": "Model downloaded and saved locally."}

@@ -10,14 +10,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuAddDrive = document.getElementById('menu-add-drive');
     const menuAddGithub = document.getElementById('menu-add-github');
     const docListContainer = document.getElementById('doc-list-container');
-    const courseSelector = document.getElementById('course-selector');
     const addCourseBtn = document.getElementById('add-course-btn');
     const searchWebToggle = document.getElementById('search-web-toggle');
+    const tabContainer = document.getElementById('tab-container');
     const autoQuizToggle = document.getElementById('auto-quiz-toggle');
     
     let chatHistory = [];
     const sessionId = localStorage.getItem('nexus_session_id') || 'default';
     let activeCourse = 'General';
+    let openTabs = ['General'];
+
+    // Load open tabs and active course from localStorage
+    const savedActive = localStorage.getItem('nexus_active_course');
+    const savedTabsStr = localStorage.getItem('nexus_open_tabs');
+    if (savedActive) {
+        activeCourse = savedActive;
+    }
+    if (savedTabsStr) {
+        try {
+            const parsed = JSON.parse(savedTabsStr);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                openTabs = parsed;
+            }
+        } catch(e) {
+            console.error("Failed to parse saved tabs", e);
+        }
+    }
+    // Always ensure General is in openTabs
+    if (!openTabs.includes('General')) {
+        openTabs.unshift('General');
+    }
+
+    function saveTabsState() {
+        localStorage.setItem('nexus_active_course', activeCourse || 'General');
+        localStorage.setItem('nexus_open_tabs', JSON.stringify(openTabs));
+    }
     
     let contextMenu = document.getElementById('custom-context-menu');
     if (!contextMenu) {
@@ -161,8 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ name: cname })
                 });
                 if (res.ok) {
+                    if (!openTabs.includes(cname)) openTabs.push(cname);
                     activeCourse = cname;
                     await fetchDocuments();
+                    await fetchChatHistory(activeCourse);
                     appendSystemMessage(`Switched to new course: ${cname}`);
                 }
             }
@@ -171,13 +200,54 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    if (courseSelector) {
-        courseSelector.addEventListener('change', (e) => {
-            const target = e.target;
-            activeCourse = target.value;
-            appendSystemMessage(`Active Context changed to: ${activeCourse}`);
-        });
+    async function fetchChatHistory(courseName) {
+        try {
+            const res = await fetch(`/api/chat/history?course=${encodeURIComponent(courseName)}`, {
+                headers: { 'X-Session-ID': sessionId }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                chatHistory = data.messages || [];
+                renderChatHistory();
+            }
+        } catch (err) {
+            console.error(err);
+        }
     }
+
+    function renderChatHistory() {
+        if (!chatArea) return;
+        chatArea.innerHTML = '';
+        if (chatHistory.length === 0) {
+            appendSystemMessage(`System initialized. Upload your study materials or links to begin course context: ${activeCourse}`);
+        } else {
+            chatHistory.forEach(msg => {
+                if (msg.role === 'system') return; // backend doesn't save system but just in case
+                appendMessage(msg.role, msg.content);
+            });
+        }
+    }
+
+    async function fetchUserState() {
+        try {
+            const res = await fetch('/api/user/state', {
+                headers: { 'X-Session-ID': sessionId }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const readinessBar = document.getElementById('readiness-bar');
+                const readinessText = document.getElementById('readiness-text');
+                if (readinessBar && readinessText) {
+                    readinessBar.style.width = `${data.readiness}%`;
+                    readinessText.textContent = `${data.readiness}%`;
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // Course selector removed in favor of tabs
     async function fetchDocuments() {
         try {
             const res = await fetch('/api/documents', {
@@ -190,33 +260,122 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(err);
         }
     }
+    function renderTabs() {
+        if (!tabContainer) return;
+        saveTabsState();
+        tabContainer.innerHTML = '';
+        
+        if (openTabs.length === 0 && activeCourse) {
+            openTabs.push(activeCourse);
+        }
+
+        openTabs.forEach(cName => {
+            const tab = document.createElement('div');
+            tab.className = `course-tab ${cName === activeCourse ? 'active' : ''}`;
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = cName;
+            tab.appendChild(titleSpan);
+            
+            if (cName !== 'General') {
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'tab-close-btn';
+                closeBtn.innerHTML = '&times;';
+                closeBtn.title = "Close tab";
+                
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeTab(cName);
+                });
+                
+                tab.appendChild(closeBtn);
+            }
+            
+            tab.addEventListener('click', () => {
+                if (activeCourse !== cName) {
+                    activeCourse = cName;
+                    renderTabs();
+                    fetchChatHistory(activeCourse).then(() => {
+                        appendSystemMessage(`Active Context changed to: ${activeCourse}`);
+                    });
+                }
+            });
+            
+            tabContainer.appendChild(tab);
+        });
+    }
+
+    function closeTab(cName) {
+        openTabs = openTabs.filter(t => t !== cName);
+        if (activeCourse === cName) {
+            if (openTabs.length > 0) {
+                activeCourse = openTabs[openTabs.length - 1];
+            } else {
+                activeCourse = null;
+            }
+        }
+        renderTabs();
+        if (activeCourse) {
+            fetchChatHistory(activeCourse).then(() => {
+                appendSystemMessage(`Active Context changed to: ${activeCourse}`);
+            });
+        } else {
+            if (chatArea) chatArea.innerHTML = '';
+            appendSystemMessage("All tabs closed. Select a course from the sidebar to begin.");
+        }
+    }
+
     function renderCourses(courses) {
-        if (!docListContainer || !courseSelector)
+        if (!docListContainer)
             return;
         docListContainer.innerHTML = '';
-        courseSelector.innerHTML = '';
         const courseNames = Object.keys(courses);
-        if (!courseNames.includes(activeCourse) && courseNames.length > 0) {
-            activeCourse = courseNames[0];
+        
+        // Filter openTabs to only keep courses that actually exist (plus 'General')
+        openTabs = openTabs.filter(t => t === 'General' || courseNames.includes(t));
+        
+        // Ensure activeCourse is valid and exists in openTabs (or falls back)
+        if (!openTabs.includes(activeCourse)) {
+            if (openTabs.length > 0) {
+                activeCourse = openTabs[openTabs.length - 1];
+            } else {
+                activeCourse = 'General';
+            }
         }
+        
+        renderTabs();
+
         courseNames.forEach(cName => {
-            const opt = document.createElement('option');
-            opt.value = cName;
-            opt.textContent = cName;
-            if (cName === activeCourse)
-                opt.selected = true;
-            courseSelector.appendChild(opt);
             const group = document.createElement('div');
             group.className = 'course-group';
             group.style.marginBottom = '1rem';
             const header = document.createElement('div');
             header.className = 'course-header';
-            header.style.fontWeight = 'bold';
-            header.style.color = 'var(--text-main)';
-            header.style.borderBottom = '1px solid var(--border)';
-            header.style.paddingBottom = '0.5rem';
-            header.style.marginBottom = '0.5rem';
-            header.textContent = cName;
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = cName;
+            header.appendChild(titleSpan);
+            
+            const iconSvg = document.createElement('div');
+            iconSvg.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.6;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+            iconSvg.style.display = 'flex';
+            header.appendChild(iconSvg);
+            
+            header.addEventListener('click', () => {
+                if (!openTabs.includes(cName)) {
+                    openTabs.push(cName);
+                }
+                if (activeCourse !== cName) {
+                    activeCourse = cName;
+                    renderTabs();
+                    fetchChatHistory(activeCourse).then(() => {
+                        appendSystemMessage(`Active Context changed to: ${activeCourse}`);
+                    });
+                } else {
+                    renderTabs();
+                }
+            });
+
             group.appendChild(header);
             const docList = document.createElement('div');
             docList.className = 'course-docs';
@@ -287,6 +446,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     async function sendMessage() {
+        if (!activeCourse) {
+            alert("Please open or select a course tab first.");
+            return;
+        }
         if (!messageInput)
             return;
         const content = messageInput.value.trim();
@@ -484,5 +647,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chatArea)
             chatArea.scrollTop = chatArea.scrollHeight;
     }
-    fetchDocuments();
+    
+    async function init() {
+        await fetchDocuments();
+        await fetchUserState();
+        await fetchChatHistory(activeCourse);
+    }
+    init();
 });

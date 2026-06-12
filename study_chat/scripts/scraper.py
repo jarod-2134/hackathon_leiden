@@ -2,7 +2,6 @@ import os
 import re
 import requests
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
 def scrape_web_files(TARGET_URL, OUTPUT_DIR, SUBJECT="General"):
 
@@ -56,6 +55,7 @@ def scrape_web_files(TARGET_URL, OUTPUT_DIR, SUBJECT="General"):
         print(f"Discovered {len(discovered_items)} distinct chapters/links to process.\n")
 
         # We only start the heavy browser if we actually encounter HTML pages
+        from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
             browser = None
             page = None
