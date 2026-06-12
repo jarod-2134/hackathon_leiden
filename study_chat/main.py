@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 import io
 import uuid
 import json
@@ -45,12 +45,14 @@ app.add_middleware(
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# OpenAI/Grok Configuration
-API_KEY = os.getenv("GROK_API_KEY", "your-grok-api-key")
+# OpenAI/Groq Configuration
+API_KEY = os.getenv("GROQ_API_KEY", "your-groq-api-key")
+
 client = OpenAI(
     api_key=API_KEY,
-    base_url="https://api.x.ai/v1",
+    base_url="https://api.groq.com/openai/v1",
 )
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
 # --- IN-MEMORY STORAGE ---
 # Structure: { session_id: { course_name: [ {"id": "uuid", "source_name": "filename", "source_type": "file|url", "content": "text..."} ] } }
@@ -270,7 +272,10 @@ async def chat(
         except Exception:
             pass
             
+    # Truncate context to prevent API token limit errors (Groq limits)
     context_text = summary_text + "\n\n".join([f"Source: {d['source_name']}\nContent: {d['content']}" for d in docs])
+    if len(context_text) > 15000:
+        context_text = context_text[:15000] + "\n...[TRUNCATED DUE TO LENGTH]"
     
     system_prompt = (
         "You are an AI study assistant. Your task is to answer the user's question based strictly on the provided context. "
@@ -296,7 +301,7 @@ async def chat(
 
     try:
         response = client.chat.completions.create(
-            model="grok-beta",
+            model=DEFAULT_MODEL,
             messages=messages,
             temperature=0.3
         )
@@ -323,7 +328,10 @@ async def chat(
                 "role": "assistant", 
                 "content": ans_content
             }
-        raise HTTPException(status_code=500, detail=str(e))
+        
+        # If it's a token limit error or something else, return it safely as a chat response so the user sees it
+        ans_content = f"[SYSTEM ERROR] The AI encountered an error processing your request: {str(e)}"
+        return {"role": "assistant", "content": ans_content}
 
 
 # --- QUIZ ROUTING & LOGIC ---
@@ -559,7 +567,7 @@ async def generate_quiz(req: QuizGenerateRequest):
     
     try:
         response = client.chat.completions.create(
-            model="grok-beta",
+            model=DEFAULT_MODEL,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": "Generate the quiz now."}
@@ -674,7 +682,7 @@ async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default
             )
             
             response = client.chat.completions.create(
-                model="grok-beta",
+                model=DEFAULT_MODEL,
                 messages=[
                     {"role": "system", "content": grade_prompt},
                     {"role": "user", "content": "Grade the submissions now."}
@@ -684,7 +692,7 @@ async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default
             content = response.choices[0].message.content
             oe_grades = clean_and_parse_json(content)
         except Exception as e:
-            # Local fallback grading if Grok is not available
+            # Local fallback grading if Groq is not available
             for q in oe_questions_to_grade:
                 q_id = q["id"]
                 ans = q["student_answer"]
@@ -746,7 +754,7 @@ async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default
 
     update_user_state(x_session_id, overall_score)
 
-    # Generate overall summary paragraph using Grok, fallback to local-based if Grok is down
+    # Generate overall summary paragraph using Groq, fallback to local-based if Groq is down
     summary_obj = {}
     try:
         summary_prompt = (
@@ -774,7 +782,7 @@ async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default
             "Make sure to output ONLY the raw JSON. Do not include any text before or after the JSON."
         )
         response = client.chat.completions.create(
-            model="grok-beta",
+            model=DEFAULT_MODEL,
             messages=[
                 {"role": "system", "content": summary_prompt},
                 {"role": "user", "content": "Write the summary now."}
@@ -833,12 +841,46 @@ async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default
     }
 
 @app.post("/api/scrape")
-def scrape_books(scrape_req: ScrapeRequest):
+def scrape_books(
+    scrape_req: ScrapeRequest,
+    x_session_id: str = Header(default="default-session")
+):
     from scripts.scraper import scrape_web_files
     TARGET_URL = scrape_req.url
     OUTPUT_DIR = scrape_req.output_dir
     SUBJECT = scrape_req.subject or "General"
+    
     scrape_web_files(TARGET_URL, OUTPUT_DIR, SUBJECT)
+    
+    # Sync downloaded files back into memory
+    course_docs = get_course_docs(x_session_id, SUBJECT)
+    if os.path.exists(OUTPUT_DIR):
+        for filename in os.listdir(OUTPUT_DIR):
+            if filename.lower().endswith('.pdf'):
+                filepath = os.path.join(OUTPUT_DIR, filename)
+                
+                if any(d["source_name"] == filename for d in course_docs):
+                    continue
+                    
+                text_content = ""
+                try:
+                    reader = PdfReader(filepath)
+                    for page in reader.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            text_content += page_text + "\n"
+                except Exception as e:
+                    text_content = f"Error reading scraped PDF: {str(e)}"
+                    
+                doc_id = str(uuid.uuid4())
+                doc = {
+                    "id": doc_id,
+                    "source_type": "file",
+                    "source_name": filename,
+                    "content": text_content
+                }
+                course_docs.append(doc)
+                
     return {"status": "success"}
 
 @app.get("/api/summarize")

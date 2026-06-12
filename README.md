@@ -23,7 +23,7 @@ When you run the project for the first time, or if new dependencies are added, t
 - **Playwright (Chromium)**: Used for robust web scraping. It installs Chromium browser binaries locally.
 
 ## API Key Configuration
-SokraText requires an API key to communicate with the AI models. By default, this uses the Grok API.
+SokraText requires an API key to communicate with the AI models. By default, this uses the Groq API. You can get your own free API key from [https://console.groq.com/keys](https://console.groq.com/keys).
 
 **Where to configure it:**
 1. In the `study_chat` folder, duplicate the `.env_example` file and rename it to `.env`.

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuAddFile = document.getElementById('menu-add-file');
     const menuAddDrive = document.getElementById('menu-add-drive');
     const menuAddGithub = document.getElementById('menu-add-github');
+    const menuAddBook = document.getElementById('menu-add-book');
     const docListContainer = document.getElementById('doc-list-container');
     const addCourseBtn = document.getElementById('add-course-btn');
     const searchWebToggle = document.getElementById('search-web-toggle');
@@ -166,12 +167,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         catch (err) {
             console.error(err);
+            alert('An error occurred');
         }
     }
-    if (menuAddDrive)
-        menuAddDrive.addEventListener('click', () => handleAddLink("Enter Google Drive URL:"));
-    if (menuAddGithub)
-        menuAddGithub.addEventListener('click', () => handleAddLink("Enter GitHub URL:"));
+    if (menuAddDrive) {
+        menuAddDrive.addEventListener('click', () => handleAddLink('Enter Google Drive URL:'));
+    }
+    if (menuAddGithub) {
+        menuAddGithub.addEventListener('click', () => handleAddLink('Enter GitHub URL:'));
+    }
+    if (menuAddBook) {
+        menuAddBook.addEventListener('click', async () => {
+            if (popoverMenu) popoverMenu.classList.add('hidden');
+            const url = prompt('Enter Book URL to scrape:');
+            if (!url) return;
+            try {
+                appendSystemMessage(`Scraping book from ${url}... This might take a while.`);
+                const res = await fetch('/api/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-ID': sessionId
+                    },
+                    body: JSON.stringify({ 
+                        url, 
+                        output_dir: `files/${activeCourse}/files`, 
+                        subject: activeCourse 
+                    })
+                });
+                if (res.ok) {
+                    await fetchDocuments();
+                    appendSystemMessage(`Book scraped successfully and added to ${activeCourse}!`);
+                } else {
+                    alert('Scraping failed');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred while scraping');
+            }
+        });
+    }
     if (addCourseBtn) {
         addCourseBtn.addEventListener('click', async () => {
             const name = prompt("Enter new course name:");
