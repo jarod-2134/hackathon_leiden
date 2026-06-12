@@ -49,19 +49,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.dataTransfer || !e.dataTransfer.files.length) return;
         const file = e.dataTransfer.files[0];
 
-        // Prompt for course
+        // Determine course
         const isHomePage = window.location.pathname.includes('index.html') || window.location.pathname === '/';
-        let defaultCourse = 'General';
+        let courseName = 'General';
         
-        // If in chat, try to read activeCourse from select
-        const courseSelector = document.getElementById('course-selector');
-        if (courseSelector) {
-            defaultCourse = courseSelector.value || 'General';
+        if (isHomePage) {
+            let userPrompt = prompt(`Enter course name for ${file.name}:`, 'General');
+            if (!userPrompt || !userPrompt.trim()) return; // Cancelled
+            courseName = userPrompt.trim();
+        } else {
+            // We are in chat, load the current active course from localStorage
+            courseName = localStorage.getItem('nexus_active_course') || 'General';
         }
-
-        let courseName = prompt(`Enter course name for ${file.name}:`, defaultCourse);
-        if (!courseName || !courseName.trim()) return; // Cancelled
-        courseName = courseName.trim();
 
         const formData = new FormData();
         formData.append('file', file);

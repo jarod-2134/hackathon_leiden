@@ -45,12 +45,30 @@ app.add_middleware(
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# OpenAI/Grok Configuration
-API_KEY = os.getenv("GROK_API_KEY", "your-grok-api-key")
-client = OpenAI(
-    api_key=API_KEY,
-    base_url="https://api.x.ai/v1",
-)
+# Try to load environment variables from .env file manually if present
+if os.path.exists(".env"):
+    with open(".env", encoding="utf-8") as f:
+        for line in f:
+            if line.strip() and not line.strip().startswith("#") and "=" in line:
+                key, val = line.strip().split("=", 1)
+                os.environ[key.strip()] = val.strip().strip('"').strip("'")
+
+# OpenAI/Grok/Groq Configuration
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROK_API_KEY = os.getenv("GROK_API_KEY")
+
+if GROQ_API_KEY:
+    client = OpenAI(
+        api_key=GROQ_API_KEY,
+        base_url="https://api.groq.com/openai/v1"
+    )
+    DEFAULT_MODEL = "llama-3.3-70b-versatile"
+else:
+    client = OpenAI(
+        api_key=GROK_API_KEY or "your-grok-api-key",
+        base_url="https://api.x.ai/v1",
+    )
+    DEFAULT_MODEL = "grok-beta"
 
 # --- IN-MEMORY STORAGE ---
 # Structure: { session_id: { course_name: [ {"id": "uuid", "source_name": "filename", "source_type": "file|url", "content": "text..."} ] } }
@@ -296,7 +314,7 @@ async def chat(
 
     try:
         response = client.chat.completions.create(
-            model="grok-beta",
+            model=DEFAULT_MODEL,
             messages=messages,
             temperature=0.3
         )
@@ -559,7 +577,7 @@ async def generate_quiz(req: QuizGenerateRequest):
     
     try:
         response = client.chat.completions.create(
-            model="grok-beta",
+            model=DEFAULT_MODEL,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": "Generate the quiz now."}
@@ -674,7 +692,7 @@ async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default
             )
             
             response = client.chat.completions.create(
-                model="grok-beta",
+                model=DEFAULT_MODEL,
                 messages=[
                     {"role": "system", "content": grade_prompt},
                     {"role": "user", "content": "Grade the submissions now."}
@@ -774,7 +792,7 @@ async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default
             "Make sure to output ONLY the raw JSON. Do not include any text before or after the JSON."
         )
         response = client.chat.completions.create(
-            model="grok-beta",
+            model=DEFAULT_MODEL,
             messages=[
                 {"role": "system", "content": summary_prompt},
                 {"role": "user", "content": "Write the summary now."}
