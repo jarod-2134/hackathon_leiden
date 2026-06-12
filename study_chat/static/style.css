@@ -366,7 +366,7 @@ body {
     max-width: 800px;
     margin: 0 auto;
     display: flex;
-    align-items: flex-end;
+    align-items: center; /* Changed from flex-end to center for perfect single-line alignment */
     gap: 0.5rem;
     background: var(--bg-base);
     border: 1px solid var(--border);
@@ -430,12 +430,13 @@ body.dark-theme .popover-menu {
     padding: 0.5rem;
     outline: none;
     max-height: 150px;
+    line-height: 1.5;
 }
 
 .inline-toggles {
     display: flex;
     align-items: center;
-    padding-bottom: 0.5rem;
+    /* Removed padding-bottom */
 }
 
 .send-btn {
