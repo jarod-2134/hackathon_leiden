@@ -2,7 +2,7 @@ import os
 import io
 import uuid
 import json
-from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Form, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, FileResponse
@@ -89,6 +89,9 @@ class ScrapeRequest(BaseModel):
 
 class CourseRequest(BaseModel):
     name: str
+
+class DeleteDocRequest(BaseModel):
+    path: str
 
 @app.post("/api/upload")
 async def upload_file(
@@ -756,3 +759,37 @@ def get_model():
     pipe = pipeline("text-generation", model="facebook/bart-large-cnn", device="cpu")
     pipe.save_pretrained("./local_model")
     return {"status": "success", "message": "Model downloaded and saved locally."}
+
+@app.post("/api/delete")
+def delete_one_pdf(delete_req: DeleteDocRequest):
+    try:
+        os.remove(delete_req.path)
+        return {"status": "success", "message": "File deleted successfully."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/delete_course")
+def delete_course(delete_req: CourseRequest):
+    course_dir = f"files/{delete_req.name}"
+    try:
+        if os.path.exists(course_dir):
+            shutil.rmtree(course_dir)
+            return {"status": "success", "message": f"Course '{delete_req.name}' and all associated files deleted successfully."}
+        else:
+            return {"status": "error", "message": f"Course '{delete_req.name}' does not exist."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    
+
+@app.post("/api/delete_all")
+def delete_all():
+    base_dir = "files"
+    try:
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+            return {"status": "success", "message": "All courses and files deleted successfully."}
+        else:
+            return {"status": "error", "message": "No courses found to delete."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    
