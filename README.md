@@ -32,3 +32,6 @@ SokraText requires an API key to communicate with the AI models. By default, thi
    GROK_API_KEY=your-actual-api-key-here
    ```
 The application will automatically detect the `.env` file and securely load your key when starting the server.
+
+## Loading model
+The model should load automatically with the startup script. In the case it is not loaded you can go the the url of http://127.0.0.1:8000/api/get_model to load the model again.
