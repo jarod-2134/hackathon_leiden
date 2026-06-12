@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Interactive Quiz Mode</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/quiz_style.css">
+</head>
+<body>
+    <div id="dnd-overlay" class="dnd-overlay hidden">
+        <div class="dnd-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <h2>Drop files to upload instantly</h2>
+        </div>
+    </div>
+
+    <!-- Page Container taking full height and width -->
+    <div class="page-container chat-layout" style="position: relative; height: 100vh; width: 100vw;">
+        <!-- Dynamic Background -->
+        <div class="dynamic-bg">
+            <div class="floating-shape s1"></div>
+            <div class="floating-shape s2"></div>
+            <div class="floating-shape s3"></div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="sidebar" style="position: relative; z-index: 2;">
+            <div class="sidebar-header">
+                <h2>Quiz Navigator</h2>
+            </div>
+            
+            <!-- Setup view sidebar sub-content -->
+            <div id="setup-sidebar-content" class="sidebar-sub-content">
+                <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 2rem;">Configure your test settings on the right to start practicing.</p>
+            </div>
+            
+            <!-- Execution view sidebar sub-content -->
+            <div id="execution-sidebar-content" class="sidebar-sub-content hidden" style="flex: 1; display: flex; flex-direction: column;">
+                <div class="question-nav" style="display: flex; flex-direction: column; flex: 1;">
+                    <div id="question-grid" class="question-grid">
+                        <!-- Dynamic buttons like Q1, Q2... -->
+                    </div>
+                    <button id="submit-quiz-btn" class="btn" style="margin-top: auto; border-color: var(--text-muted); width: 100%;">Submit Quiz</button>
+                </div>
+            </div>
+
+            <!-- Results view sidebar sub-content -->
+            <div id="results-sidebar-content" class="sidebar-sub-content hidden">
+                <button id="retake-btn" class="btn" style="width: 100%; margin-bottom: 1rem; border-color: var(--text-muted);">Retake Quiz</button>
+            </div>
+
+            <!-- Return navigation in sidebar footer -->
+            <div class="sidebar-footer" style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 1.5rem; width: 100%;">
+                <a href="/static/chat.html" class="btn" style="display: block; text-align: center; text-decoration: none; padding: 0.75rem 0; font-size: 0.85rem; letter-spacing: 0.1rem; text-transform: uppercase; border-color: var(--text-muted);">Return to Chat</a>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content" style="position: relative; z-index: 2; background-color: rgba(var(--bg-base-rgb), 0.85); backdrop-filter: blur(10px);">
+            <!-- Header (matches index.html) -->
+            <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding: 1.5rem 2rem; min-height: 60px;">
+                <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ACTIVE SESSION</div>
+                <!-- Quiz Progress Bar in Header -->
+                <div id="quiz-progress-container" style="display: none; align-items: center; gap: 1rem; flex: 1; max-width: 400px; margin-left: 2rem;">
+                    <div class="progress-bar-track" style="flex: 1; height: 6px; background-color: var(--border); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; position: relative;">
+                        <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%; height: 100%; background-color: var(--text-main); transition: width 0.3s ease;"></div>
+                    </div>
+                    <span id="progress-text" style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">Question 1 of 5</span>
+                </div>
+            </div>
+
+            <!-- Main Work Area (replacing chat-area) -->
+            <div class="chat-area" id="quiz-workspace" style="padding: 3rem; overflow-y: auto; flex: 1;">
+                
+                <!-- Setup Screen -->
+                <div id="setup-view" class="quiz-sub-view active">
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <h1 style="font-size: 2.5rem; font-weight: 300; letter-spacing: 0.3rem; margin-bottom: 0.5rem; color: var(--text-main);">NEXUS QUIZ</h1>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2.5rem;">Test your knowledge dynamically on the active syllabus.</p>
+                        
+                        <div class="syllabus-card" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 2.5rem;">
+                            <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 500;">Target Study Syllabus</h3>
+                            <p style="font-size: 0.95rem; line-height: 1.6;"><strong>Introduction to Quantum Computing:</strong> Qubits, Superposition, Quantum Entanglement, Quantum Gates/Circuits, Shor's factoring, and Grover's search algorithms.</p>
+                        </div>
+                        
+                        <form id="setup-form" class="setup-form">
+                            <!-- 1. Number of Questions -->
+                            <div class="form-group" style="margin-bottom: 2rem;">
+                                <label style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05rem; color: var(--text-muted); display: block; margin-bottom: 0.75rem;">Number of Questions</label>
+                                <div class="choice-buttons-container" id="num-questions-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap; width: 100%;">
+                                    <button type="button" class="btn choice-btn active" data-value="5" style="flex: 1; min-width: 50px; text-align: center; padding: 0.75rem 0;">5</button>
+                                    <button type="button" class="btn choice-btn" data-value="6" style="flex: 1; min-width: 50px; text-align: center; padding: 0.75rem 0;">6</button>
+                                    <button type="button" class="btn choice-btn" data-value="7" style="flex: 1; min-width: 50px; text-align: center; padding: 0.75rem 0;">7</button>
+                                    <button type="button" class="btn choice-btn" data-value="8" style="flex: 1; min-width: 50px; text-align: center; padding: 0.75rem 0;">8</button>
+                                    <button type="button" class="btn choice-btn" data-value="9" style="flex: 1; min-width: 50px; text-align: center; padding: 0.75rem 0;">9</button>
+                                    <button type="button" class="btn choice-btn" data-value="10" style="flex: 1; min-width: 50px; text-align: center; padding: 0.75rem 0;">10</button>
+                                </div>
+                                <input type="hidden" id="num-questions" value="5">
+                            </div>
+
+                            <!-- 2. Test Format (Range Slider) -->
+                            <div class="form-group" style="margin-bottom: 2.5rem;">
+                                <label style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05rem; color: var(--text-muted); display: block; margin-bottom: 1rem;">Test Format Selection</label>
+                                <div class="slider-container" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 1rem;">
+                                    <div id="format-ratio-status" style="font-size: 0.95rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-main); text-align: center; letter-spacing: 0.05rem;">
+                                        3 Multiple Choice & 2 Open-Ended
+                                    </div>
+                                    <input type="range" id="format-slider" min="0" max="5" value="2" step="1" class="premium-slider" style="width: 100%; display: block;">
+                                    <div class="slider-labels" style="display: flex; justify-content: space-between; margin-top: 0.75rem; font-size: 0.75rem; letter-spacing: 0.05rem; text-transform: uppercase; color: var(--text-muted); align-items: center;">
+                                        <span id="label-mc-only" style="cursor: pointer; font-weight: 500; display: inline-flex; align-items: center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>100% Multi Choice</span>
+                                        <span id="label-mixed-status" style="font-weight: 500; color: var(--text-muted); display: inline-flex; align-items: center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>Mixed</span>
+                                        <span id="label-open-only" style="cursor: pointer; font-weight: 500; display: inline-flex; align-items: center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>100% Open Ended</span>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="test-type" value="mixed">
+                                <input type="hidden" id="num-open-questions" value="2">
+                            </div>
+                            
+                            <button type="submit" id="start-btn" class="btn action-btn">Generate Challenge</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Quiz Execution Screen -->
+                <div id="execution-view" class="quiz-sub-view hidden">
+                    <div style="max-width: 700px; margin: 0 auto;">
+                        <div id="question-content" class="question-content">
+                            <!-- Dynamic Question text, input controls -->
+                        </div>
+                        <div class="navigation-controls" style="display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 3rem;">
+                            <button id="prev-question-btn" class="btn control-btn">&larr; Previous</button>
+                            <button id="next-question-btn" class="btn control-btn">Next &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results & Analysis Screen -->
+                <div id="results-view" class="quiz-sub-view hidden">
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <h2 class="view-title" style="font-size: 1.8rem; font-weight: 300; letter-spacing: 0.1rem; margin-bottom: 2rem; color: var(--text-main);">Your Results</h2>
+                        <div class="score-summary-container" style="display: flex; align-items: center; gap: 3rem; margin-bottom: 3rem; background: var(--bg-surface); border: 1px solid var(--border); padding: 2rem; border-radius: 6px;">
+                            <div class="score-ring-wrapper" style="position: relative; width: 120px; height: 120px; flex-shrink: 0;">
+                                <svg class="score-ring" viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 120px; height: 120px;">
+                                    <circle class="ring-bg" cx="50" cy="50" r="45" style="fill: none; stroke: var(--bg-base); stroke-width: 8;"></circle>
+                                    <circle id="ring-fill" class="ring-fill" cx="50" cy="50" r="45" stroke-dasharray="282.7" stroke-dashoffset="282.7" style="fill: none; stroke: var(--text-main); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1.5s ease-out;"></circle>
+                                </svg>
+                                <div class="score-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                                    <span id="overall-percentage" style="display: block; font-size: 1.8rem; font-weight: 600;">0%</span>
+                                    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05rem;">Overall</label>
+                                </div>
+                            </div>
+                            <div class="score-stats" style="flex: 1; display: flex; gap: 1.5rem;">
+                                <div class="stat-box" id="mc-stat-box" style="flex: 1; background: var(--bg-base); border: 1px solid var(--border); padding: 1rem 1.25rem; border-radius: 6px; display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span class="stat-label" style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05rem;">Multiple Choice</span>
+                                    <span class="stat-value" id="mc-score-val" style="font-size: 1.4rem; font-weight: 500;">-</span>
+                                </div>
+                                <div class="stat-box" id="oe-stat-box" style="flex: 1; background: var(--bg-base); border: 1px solid var(--border); padding: 1rem 1.25rem; border-radius: 6px; display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span class="stat-label" style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05rem;">Open-Ended Grade</span>
+                                    <span class="stat-value" id="oe-score-val" style="font-size: 1.4rem; font-weight: 500;">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feedback Summary Card -->
+                        <div class="summary-card" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 3rem;">
+                            <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1rem; color: var(--text-main); margin-bottom: 1.25rem; font-weight: 600;">Feedback Analysis</h3>
+                            <div id="feedback-summary-container" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                                <div>
+                                    <h4 style="font-size: 0.9rem; color: #2ecc71; margin-bottom: 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                        Strong Points
+                                    </h4>
+                                    <ul id="strong-points-list" style="margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; list-style-type: disc; font-size: 0.95rem; line-height: 1.5; color: var(--text-main);">
+                                        <li>Analyzing...</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 0.9rem; color: #e74c3c; margin-bottom: 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        Weak Points
+                                    </h4>
+                                    <ul id="weak-points-list" style="margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; list-style-type: disc; font-size: 0.95rem; line-height: 1.5; color: var(--text-main);">
+                                        <li>Analyzing...</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-results">
+                            <h3 style="font-size: 1rem; font-weight: 500; letter-spacing: 0.05rem; margin-bottom: 1.5rem; color: var(--text-muted); text-transform: uppercase;">Detailed Answer Breakdown</h3>
+                            <div id="analysis-list" class="analysis-list" style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 3rem;">
+                                <!-- Dynamic question reviews -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <h3>Submit Quiz?</h3>
+            <p id="confirm-modal-text">Are you sure you want to end the test and submit your answers?</p>
+            <div class="modal-buttons">
+                <button id="modal-cancel-btn" class="btn">Cancel</button>
+                <button id="modal-confirm-btn" class="btn action-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p id="loading-text">Generating quantum challenge...</p>
+    </div>
+
+    <script src="/static/theme.js"></script>
+    <script src="/static/quiz_script.js"></script>
+    <script src="/static/dnd.js"></script>
+</body>
+</html>
