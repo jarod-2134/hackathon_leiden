@@ -23,3 +23,6 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+
+# User Chat History Data
+user_chat_history/

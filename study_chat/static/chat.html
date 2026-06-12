@@ -52,14 +52,26 @@
                 </button>
             </div>
             
+            <div id="readiness-widget" style="padding: 0.75rem; background: var(--bg-surface-hover); border-radius: 6px; margin-bottom: 1rem; border: 1px solid var(--border);">
+                <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.25rem;">USER READINESS</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="flex-grow: 1; height: 6px; background: var(--bg-base); border-radius: 3px; overflow: hidden;">
+                        <div id="readiness-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-color), var(--accent-hover)); border-radius: 3px; transition: width 0.5s ease;"></div>
+                    </div>
+                    <span id="readiness-text" style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">0%</span>
+                </div>
+            </div>
+
             <div class="sidebar-content" id="doc-list-container">
                 <!-- Accordions for Courses will be populated here -->
             </div>
         </div>
 
         <div class="main-content" style="position: relative; z-index: 2; background-color: rgba(var(--bg-base-rgb), 0.85); backdrop-filter: blur(10px);">
-            <div class="chat-header">
-                <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ACTIVE SESSION</div>
+            <div class="chat-header" style="align-items: flex-end; padding-bottom: 0;">
+                <div id="tab-container" class="tab-container">
+                    <!-- Tabs will be rendered here -->
+                </div>
             </div>
 
             <div class="chat-area" id="chat-area">
@@ -72,15 +84,7 @@
             <div class="input-area">
                 <div class="input-wrapper" style="flex-direction: column; align-items: stretch; gap: 0.5rem; background: transparent; border: none; padding: 0;">
                     
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <!-- Course Context Selector -->
-                        <div class="course-context-selector" style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Active Context:</span>
-                            <select id="course-selector" class="theme-select" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;">
-                                <option value="General">General</option>
-                            </select>
-                        </div>
-                        
+                    <div style="display: flex; align-items: center; justify-content: flex-end;">
                         <div class="inline-toggles">
                             <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-right: 0.5rem;">Web Search</span>
                             <label class="switch inline-switch">

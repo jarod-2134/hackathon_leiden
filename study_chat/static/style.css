@@ -321,6 +321,26 @@ body {
     margin-bottom: 1rem;
 }
 
+.course-header {
+    font-weight: 600;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: var(--transition);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+.course-header:hover {
+    background: var(--bg-surface-hover);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
 .documents-list {
     flex: 1;
     overflow-y: auto;
@@ -700,4 +720,82 @@ body.dark-theme .dnd-overlay {
     text-align: center;
     z-index: 1;
     position: relative;
+}
+
+.tab-container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    width: 100%;
+    height: calc(100% + 1px);
+    margin-bottom: -1px;
+    padding: 0;
+    position: relative;
+    z-index: 1;
+}
+.tab-container::-webkit-scrollbar {
+    display: none;
+}
+.course-tab {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    min-width: 120px;
+    max-width: 250px;
+    height: 100%;
+    padding: 0 16px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+    position: relative;
+    box-sizing: border-box;
+}
+.course-tab:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-main);
+}
+.course-tab.active {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    font-weight: 600;
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--bg-base);
+    z-index: 10;
+}
+.course-tab.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--accent-primary);
+    border-radius: 12px 12px 0 0;
+}
+.tab-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border-radius: 50%;
+}
+.tab-close-btn:hover {
+    background: rgba(255, 0, 0, 0.1);
+    color: #ef4444;
 }
