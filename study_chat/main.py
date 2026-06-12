@@ -2,7 +2,7 @@ import os
 import io
 import uuid
 import json
-from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Form, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, FileResponse
@@ -140,29 +140,14 @@ async def upload_file(
     x_session_id: str = Header(default="default-session")
 ):
     try:
-        content_bytes = await file.read()
-        text_content = ""
+        # upload file to structure
+        PATH = f"files/{course}/files/{file.filename}"
+        os.makedirs(os.path.dirname(PATH), exist_ok=True)
+        with open(PATH, "wb") as f:
+            contents = await file.read()
+            f.write(contents)
         
-        if file.filename.endswith(".pdf"):
-            reader = PdfReader(io.BytesIO(content_bytes))
-            for page in reader.pages:
-                text_content += page.extract_text() + "\n"
-        else:
-            # Assume text based
-            text_content = content_bytes.decode("utf-8", errors="ignore")
-        
-        doc_id = str(uuid.uuid4())
-        doc = {
-            "id": doc_id,
-            "source_type": "file",
-            "source_name": file.filename,
-            "content": text_content
-        }
-        
-        docs = get_course_docs(x_session_id, course)
-        docs.append(doc)
-        
-        return {"id": doc_id, "source_name": doc["source_name"], "source_type": doc["source_type"]}
+        return {"filename": file.filename, "course": course}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -192,8 +177,15 @@ async def add_link(
             "content": text_content
         }
         
-        docs = get_course_docs(x_session_id, link_req.course)
-        docs.append(doc)
+        # Save it to the file-structure
+        course_dir = f"files/{link_req.course}/links"
+        os.makedirs(course_dir, exist_ok=True)
+        filename = f"{doc_id}.txt"
+        with open(os.path.join(course_dir, filename), "w", encoding="utf-8") as f:
+            f.write(text_content)
+        # Also save it to in-memory store for immediate access
+        course_docs = get_course_docs(x_session_id, link_req.course)
+        course_docs.append(doc)
         
         return {"id": doc_id, "source_name": doc["source_name"], "source_type": doc["source_type"]}
     except Exception as e:
@@ -809,10 +801,13 @@ def scrape_books(scrape_req: ScrapeRequest):
     return {"status": "success"}
 
 @app.get("/api/summarize")
-def summarize_all():
+def summarize_all(background_tasks: BackgroundTasks):
     from scripts.summariser import summariser
-    summariser()
-    return {"status": "success", "message": "Summarization complete. Check server logs for details."}
+    background_tasks.add_task(summariser)
+    return {
+        "status": "processing", 
+        "message": "Summarization task started in the background. Check server logs for progress."
+    }
 
 @app.get("/api/get_model")
 def get_model():
