@@ -151,8 +151,34 @@ async def upload_file(
         with open(PATH, "wb") as f:
             contents = await file.read()
             f.write(contents)
+            
+        # Extract text from the file so the model can use it
+        text_content = ""
+        try:
+            if PATH.lower().endswith('.pdf'):
+                reader = PdfReader(PATH)
+                for page in reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_content += page_text + "\n"
+            else:
+                with open(PATH, 'r', encoding='utf-8') as text_file:
+                    text_content = text_file.read()
+        except Exception as e:
+            text_content = f"Error reading file content: {str(e)}"
+            
+        doc_id = str(uuid.uuid4())
+        doc = {
+            "id": doc_id,
+            "source_type": "file",
+            "source_name": file.filename,
+            "content": text_content
+        }
         
-        return {"filename": file.filename, "course": course}
+        course_docs = get_course_docs(x_session_id, course)
+        course_docs.append(doc)
+        
+        return {"id": doc_id, "filename": file.filename, "course": course, "source_type": doc["source_type"]}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -234,7 +260,17 @@ async def chat(
     x_session_id: str = Header(default="default-session")
 ):
     docs = get_course_docs(x_session_id, request.course)
-    context_text = "\n\n".join([f"Source: {d['source_name']}\nContent: {d['content']}" for d in docs])
+    
+    summary_text = ""
+    summary_path = "summary/summary.md"
+    if os.path.exists(summary_path):
+        try:
+            with open(summary_path, "r", encoding="utf-8") as f:
+                summary_text = f"Source: MASTER SUMMARY (summary.md)\nContent: {f.read()}\n\n"
+        except Exception:
+            pass
+            
+    context_text = summary_text + "\n\n".join([f"Source: {d['source_name']}\nContent: {d['content']}" for d in docs])
     
     system_prompt = (
         "You are an AI study assistant. Your task is to answer the user's question based strictly on the provided context. "

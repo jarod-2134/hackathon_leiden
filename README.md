@@ -26,9 +26,9 @@ When you run the project for the first time, or if new dependencies are added, t
 SokraText requires an API key to communicate with the AI models. By default, this uses the Grok API.
 
 **Where to configure it:**
-1. In the root of the project, duplicate the `.env.example` file and rename it to `.env`.
+1. In the `study_chat` folder, duplicate the `.env_example` file and rename it to `.env`.
 2. Open the newly created `.env` file and replace the placeholder with your actual API key:
    ```env
-   GROK_API_KEY=your-actual-api-key-here
+   GROQ_API_KEY=your-actual-api-key-here
    ```
 The application will automatically detect the `.env` file and securely load your key when starting the server.
