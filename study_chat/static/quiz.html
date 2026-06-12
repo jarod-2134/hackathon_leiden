@@ -50,8 +50,9 @@
             </div>
             
             <!-- Setup view sidebar sub-content -->
-            <div id="setup-sidebar-content" class="sidebar-sub-content">
+            <div id="setup-sidebar-content" class="sidebar-sub-content hidden">
                 <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 2rem;">Configure your test settings on the right to start practicing.</p>
+                <button id="back-to-hub-btn" class="btn" style="width: 100%; border-color: var(--text-muted);">Back to Hub</button>
             </div>
             
             <!-- Execution view sidebar sub-content -->
@@ -87,8 +88,24 @@
             <!-- Main Work Area (replacing chat-area) -->
             <div class="chat-area" id="quiz-workspace" style="padding: 3rem; overflow-y: auto; flex: 1;">
                 
+                <!-- Hub Screen -->
+                <div id="hub-view" class="quiz-sub-view active">
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+                            <div>
+                                <h1 style="font-size: 2.5rem; font-family: var(--font-logo); font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">QUIZ HUB</h1>
+                                <p style="color: var(--text-muted); font-size: 0.95rem;">Review past challenges or create a new one.</p>
+                            </div>
+                            <button id="hub-create-btn" class="btn" style="background: var(--text-main); color: var(--bg-base); border-color: var(--text-main);">+ New Challenge</button>
+                        </div>
+                        <div id="hub-quizzes-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Quizzes populated here -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Setup Screen -->
-                <div id="setup-view" class="quiz-sub-view active">
+                <div id="setup-view" class="quiz-sub-view hidden">
                     <div style="max-width: 600px; margin: 0 auto;">
                         <h1 style="font-size: 2.5rem; font-family: var(--font-logo); font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">SOKRATEXT QUIZ</h1>
                         <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2.5rem;">Test your knowledge dynamically on the active syllabus.</p>

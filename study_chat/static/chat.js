@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addCourseBtn = document.getElementById('add-course-btn');
     const searchWebToggle = document.getElementById('search-web-toggle');
     const tabContainer = document.getElementById('tab-container');
+    const autoQuizToggle = document.getElementById('auto-quiz-toggle');
     
     let chatHistory = [];
     const sessionId = localStorage.getItem('nexus_session_id') || 'default';
@@ -461,19 +462,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const typingId = appendTypingIndicator();
         try {
             const search_web = localStorage.getItem('nexus_search_web') === 'true';
+            const auto_quiz = autoQuizToggle ? autoQuizToggle.checked : false;
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Session-ID': sessionId
                 },
-                body: JSON.stringify({ messages: chatHistory, search_web, course: activeCourse })
+                body: JSON.stringify({ messages: chatHistory, search_web, course: activeCourse, auto_quiz: auto_quiz })
             });
             removeMessage(typingId);
             if (res.ok) {
                 const data = await res.json();
                 chatHistory.push({ role: data.role, content: data.content });
-                appendMessage('assistant', data.content);
+                appendMessage('assistant', data.content, data.inline_quiz);
             }
             else {
                 appendSystemMessage("Error connecting to the intelligence core.");
@@ -485,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
             appendSystemMessage("Network error.");
         }
     }
-    function appendMessage(role, text) {
+    function appendMessage(role, text, inlineQuiz = null) {
         if (!chatArea)
             return;
         const div = document.createElement('div');
@@ -496,6 +498,98 @@ document.addEventListener('DOMContentLoaded', () => {
         const bubble = document.createElement('div');
         bubble.className = 'bubble';
         bubble.textContent = text;
+        
+        if (inlineQuiz && inlineQuiz.questions && inlineQuiz.questions.length > 0) {
+            const quizContainer = document.createElement('div');
+            quizContainer.className = 'inline-quiz-container';
+            quizContainer.style.marginTop = '1rem';
+            quizContainer.style.paddingTop = '1rem';
+            quizContainer.style.borderTop = '1px solid var(--border)';
+            
+            const title = document.createElement('div');
+            title.style.fontWeight = '600';
+            title.style.color = 'var(--primary)';
+            title.style.marginBottom = '0.75rem';
+            title.textContent = 'Interactive Challenge';
+            quizContainer.appendChild(title);
+            
+            inlineQuiz.questions.forEach((q) => {
+                const qDiv = document.createElement('div');
+                qDiv.style.marginBottom = '1rem';
+                
+                const qText = document.createElement('div');
+                qText.style.fontWeight = '500';
+                qText.style.marginBottom = '0.5rem';
+                qText.textContent = q.question;
+                qDiv.appendChild(qText);
+                
+                if (q.type === 'multiple_choice' && q.options) {
+                    const optList = document.createElement('div');
+                    optList.style.display = 'flex';
+                    optList.style.flexDirection = 'column';
+                    optList.style.gap = '0.5rem';
+                    
+                    Object.entries(q.options).forEach(([key, val]) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'secondary-btn inline-quiz-opt';
+                        btn.style.textAlign = 'left';
+                        btn.style.justifyContent = 'flex-start';
+                        btn.style.whiteSpace = 'normal';
+                        btn.style.padding = '0.5rem 0.75rem';
+                        btn.innerHTML = `<strong style="margin-right: 0.5rem;">${key}</strong> ${val}`;
+                        
+                        btn.addEventListener('click', async () => {
+                            btn.innerHTML = `<strong style="margin-right: 0.5rem;">...</strong> Submitting...`;
+                            try {
+                                const res = await fetch('/api/quiz/submit', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({
+                                        quiz_id: inlineQuiz.quiz_id,
+                                        answers: { [q.id]: key }
+                                    })
+                                });
+                                const resultData = await res.json();
+                                const ansInfo = resultData.questions_analysis[0];
+                                
+                                // Disable all
+                                optList.querySelectorAll('button').forEach(b => {
+                                    b.disabled = true;
+                                    b.style.opacity = '0.5';
+                                    b.style.cursor = 'not-allowed';
+                                });
+                                
+                                btn.style.opacity = '1';
+                                btn.innerHTML = `<strong style="margin-right: 0.5rem;">${key}</strong> ${val}`;
+                                if (ansInfo.is_correct) {
+                                    btn.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                                    btn.style.borderColor = '#10b981';
+                                } else {
+                                    btn.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                                    btn.style.borderColor = '#ef4444';
+                                }
+                                
+                                const feedback = document.createElement('div');
+                                feedback.style.marginTop = '0.5rem';
+                                feedback.style.fontSize = '0.85rem';
+                                feedback.style.color = ansInfo.is_correct ? '#10b981' : '#ef4444';
+                                feedback.textContent = ansInfo.feedback;
+                                qDiv.appendChild(feedback);
+                                
+                            } catch (err) {
+                                console.error(err);
+                                btn.textContent = 'Error submitting';
+                            }
+                        });
+                        optList.appendChild(btn);
+                    });
+                    qDiv.appendChild(optList);
+                }
+                quizContainer.appendChild(qDiv);
+            });
+            bubble.appendChild(quizContainer);
+        }
+        
         div.appendChild(avatar);
         div.appendChild(bubble);
         chatArea.appendChild(div);

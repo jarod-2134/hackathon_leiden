@@ -26,3 +26,6 @@ __pycache__/
 
 # User Chat History Data
 user_chat_history/
+files/
+summary/
+local_model/

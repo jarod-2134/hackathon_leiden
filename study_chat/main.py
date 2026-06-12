@@ -12,6 +12,10 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 from pypdf import PdfReader
+from transformers import pipeline
+
+from scripts.scraper import scrape_web_files
+from scripts.summariser import summariser
 
 COURSE_CONTENT = (
     "Introduction to Quantum Computing: This course covers the fundamental concepts of quantum mechanics applied to "
@@ -22,7 +26,8 @@ COURSE_CONTENT = (
     "factoring algorithm, and Grover's search algorithm."
 )
 
-CURRENT_QUIZ: Dict[str, dict] = {}
+CURRENT_QUIZ: Dict[str, dict] = {} # Deprecated, use QUIZ_STORE
+QUIZ_STORE: Dict[str, dict] = {}
 
 from drive_service import extract_drive_content
 from github_service import extract_github_content
@@ -121,6 +126,12 @@ class ChatRequest(BaseModel):
     messages: List[Message]
     search_web: bool = False
     course: str = "General"
+    auto_quiz: bool = False
+
+class ScrapeRequest(BaseModel):
+    url: str
+    output_dir: str
+    subject: Optional[str] = None
 
 class CourseRequest(BaseModel):
     name: str
@@ -261,7 +272,18 @@ async def chat(
         )
         ans_content = response.choices[0].message.content
         append_chat_message(x_session_id, request.course, {"role": "assistant", "content": ans_content})
-        return {"role": "assistant", "content": ans_content}
+        
+        inline_quiz = None
+        if request.auto_quiz:
+            try:
+                quiz_req = QuizGenerateRequest(test_type="multiple_choice", num_questions=1)
+                inline_quiz = await generate_quiz(quiz_req)
+                if inline_quiz and "quiz_id" in inline_quiz:
+                    QUIZ_STORE[inline_quiz["quiz_id"]]["title"] = f"Mini Quiz: {request.course}"
+            except Exception as e:
+                print(f"Error generating inline quiz: {e}")
+                
+        return {"role": "assistant", "content": ans_content, "inline_quiz": inline_quiz}
     except Exception as e:
         # Fallback for hackathon testing without an API key
         if "AuthenticationError" in str(type(e)) or "Connection" in str(type(e)):
@@ -283,6 +305,7 @@ class QuizGenerateRequest(BaseModel):
     num_open_questions: Optional[int] = None
 
 class QuizSubmitRequest(BaseModel):
+    quiz_id: Optional[str] = None
     answers: Dict[str, str]  # question_id -> user answer (option letter or free text)
 
 def clean_and_parse_json(text: str) -> dict:
@@ -454,9 +477,21 @@ def read_root():
 def read_quiz():
     return FileResponse("static/quiz.html")
 
+@app.get("/api/quizzes")
+def get_quizzes():
+    res = []
+    for q_id, q_data in QUIZ_STORE.items():
+        res.append({
+            "quiz_id": q_id,
+            "title": q_data.get("title", "Interactive Challenge"),
+            "question_count": len(q_data.get("questions", []))
+        })
+    return {"quizzes": res}
+
 @app.post("/api/quiz/generate")
 async def generate_quiz(req: QuizGenerateRequest):
     global CURRENT_QUIZ
+    global QUIZ_STORE
     
     quiz_id = str(uuid.uuid4())
     
@@ -512,6 +547,11 @@ async def generate_quiz(req: QuizGenerateRequest):
         "quiz_id": quiz_id,
         "questions": quiz_data.get("questions", [])
     }
+    QUIZ_STORE[quiz_id] = {
+        "quiz_id": quiz_id,
+        "title": f"Challenge ({req.num_questions} Qs)",
+        "questions": quiz_data.get("questions", [])
+    }
     
     # Strip correct answers and ideal answers before sending to client
     client_questions = []
@@ -535,10 +575,14 @@ async def generate_quiz(req: QuizGenerateRequest):
 async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default="default-session")):
     global CURRENT_QUIZ
     
-    if not CURRENT_QUIZ or "questions" not in CURRENT_QUIZ:
+    quiz_context = CURRENT_QUIZ
+    if req.quiz_id and req.quiz_id in QUIZ_STORE:
+        quiz_context = QUIZ_STORE[req.quiz_id]
+        
+    if not quiz_context or "questions" not in quiz_context:
         raise HTTPException(status_code=400, detail="No active quiz session found. Please generate a quiz first.")
         
-    questions = CURRENT_QUIZ["questions"]
+    questions = quiz_context["questions"]
     answers = req.answers
     
     mc_correct = 0
@@ -757,3 +801,22 @@ async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default
         "feedback_summary": summary_obj,
         "questions_analysis": analysis_list
     }
+
+@app.post("/api/scrape")
+def scrape_books(scrape_req: ScrapeRequest):
+    TARGET_URL = scrape_req.url
+    OUTPUT_DIR = scrape_req.output_dir
+    SUBJECT = scrape_req.subject or "General"
+    scrape_web_files(TARGET_URL, OUTPUT_DIR, SUBJECT)
+    return {"status": "success"}
+
+@app.get("/api/summarize")
+def summarize_all():
+    summariser()
+    return {"status": "success", "message": "Summarization complete. Check server logs for details."}
+
+@app.get("/api/get_model")
+def get_model():
+    pipe = pipeline("text-generation", model="facebook/bart-large-cnn", device="cpu")
+    pipe.save_pretrained("./local_model")
+    return {"status": "success", "message": "Model downloaded and saved locally."}
