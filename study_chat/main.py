@@ -12,10 +12,7 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 from pypdf import PdfReader
-from transformers import pipeline
 
-from scripts.scraper import scrape_web_files
-from scripts.summariser import summariser
 
 COURSE_CONTENT = (
     "Introduction to Quantum Computing: This course covers the fundamental concepts of quantum mechanics applied to "
@@ -804,6 +801,7 @@ async def submit_quiz(req: QuizSubmitRequest, x_session_id: str = Header(default
 
 @app.post("/api/scrape")
 def scrape_books(scrape_req: ScrapeRequest):
+    from scripts.scraper import scrape_web_files
     TARGET_URL = scrape_req.url
     OUTPUT_DIR = scrape_req.output_dir
     SUBJECT = scrape_req.subject or "General"
@@ -812,11 +810,13 @@ def scrape_books(scrape_req: ScrapeRequest):
 
 @app.get("/api/summarize")
 def summarize_all():
+    from scripts.summariser import summariser
     summariser()
     return {"status": "success", "message": "Summarization complete. Check server logs for details."}
 
 @app.get("/api/get_model")
 def get_model():
+    from transformers import pipeline
     pipe = pipeline("text-generation", model="facebook/bart-large-cnn", device="cpu")
     pipe.save_pretrained("./local_model")
     return {"status": "success", "message": "Model downloaded and saved locally."}
