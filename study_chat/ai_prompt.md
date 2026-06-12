@@ -1,40 +1,36 @@
-# Nexus AI Study Companion - Agent Developer Prompt
+# AI Study Companion - Agent Developer Prompt
 
-Copy and paste this prompt to configure any LLM agent for this codebase.
+Copy and paste this prompt to configure any LLM agent assisting with this project.
 
 ---
 
 ## 🤖 Context & Goal
-You are assisting in building **Nexus**, a lightweight FastAPI + Vanilla HTML/JS/CSS AI Study Companion. It parses course files, handles study chats, and conducts interactive quizzes.
+You are assisting in building an AI Study Companion. This application helps students by parsing course materials, providing an interactive study chat, and conducting dynamic, personalized quizzes to test their knowledge.
 
 ---
 
 ## 🚀 Key Rules & Assumptions
 
-1. **Token Optimization (Critical):**
-   - The project runs on **Groq's free tier**. Minimize context window size and API token usage.
-   - Do not pass entire documents into the LLM system prompt. Implement smart chunking and pass only the top relevant text paragraphs.
-   - Keep system prompts concise and structured.
+1. **Efficiency and Optimization:**
+   - Minimize context window size and API token usage wherever possible.
+   - Implement smart data chunking and retrieval rather than passing raw, full-length documents to the LLM.
+   - Keep system prompts concise, clear, and structured.
 
-2. **Single-User Simplicity:**
-   - Assume a single local user. No multi-session databases or state persistence between app launches are required. Use simple in-memory variables.
+2. **User Experience Focus:**
+   - The application should feel responsive, engaging, and premium.
+   - Use modern, glassmorphic styling, rich typography, and cohesive color palettes.
+   - Ensure the AI responses are educational and guide the user to the answer rather than just giving it away.
 
-3. **No Offline Resilience:**
-   - Do not write mock LLM responses or local grading fallbacks. Assume live API access.
+3. **Resilience & Fallbacks:**
+   - Always assume the possibility of network failures or API limits.
+   - Ensure there are appropriate fallback mechanisms, local grading heuristics, and mocked data when external services are unavailable.
 
-4. **UI/UX Consistency:**
-   - Any frontend edits must match the existing dark glassmorphic styling, typography, and HSL colors defined in `static/style.css`.
-
----
-
-## 🛠️ Codebase Overview
-- `main.py`: FastAPI server containing `/api/upload` (PDF parsing), `/api/chat` (context-aware chat), `/api/quiz/generate` (LLM-generated questions), and `/api/quiz/submit` (LLM-based grading).
-- `static/`: HTML pages, scripts, and CSS styling (landing page, chat, quiz flow, settings, and dark/light theme).
-- `drive_service.py` & `github_service.py`: Basic document scraping integrations.
+4. **Educational Personas:**
+   - Support multiple teaching styles (e.g., Socratic tutor, strict quiz-master, conceptual summarizer).
 
 ---
 
 ## 🧩 Primary Tasks to Focus On
-- **RAG & Chunking:** Replace sending the whole document with a lightweight search/retrieval mechanism that returns only matching paragraphs.
-- **Chat Personas:** Add dropdown presets in the UI to switch system prompt personas (e.g. Socratic tutor vs. quiz-master).
-- **Clean UI Controls:** Add simple settings in the frontend that style-integrate seamlessly.
+- **RAG & Chunking:** Build lightweight search/retrieval mechanisms.
+- **Chat Experience:** Improve the instructional quality of the chat.
+- **Adaptive Quizzing:** Implement logic to adjust quiz difficulty based on student performance.
