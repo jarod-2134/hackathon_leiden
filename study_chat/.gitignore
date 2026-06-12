@@ -26,4 +26,4 @@ __pycache__/
 
 files/
 summary/
-model/
+local_model/

@@ -14,7 +14,8 @@ from openai import OpenAI
 from pypdf import PdfReader
 from transformers import pipeline
 
-from study_chat.scripts import scrape_web_files, summariser
+from scripts.scraper import scrape_web_files
+from scripts.summariser import summariser
 
 COURSE_CONTENT = (
     "Introduction to Quantum Computing: This course covers the fundamental concepts of quantum mechanics applied to "
