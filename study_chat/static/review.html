@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SokraText | Review</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="/static/index.html" class="nav-brand">SOKRATEXT</a>
+            <span style="color: var(--border); font-weight: 300; font-size: 1.2rem;">|</span>
+        </div>
+        <div class="nav-links" style="align-items: center;">
+            <a href="/static/chat.html" class="nav-link">Chat</a>
+            <a href="/quiz" class="nav-link">Quiz</a>
+            <a href="/review" class="nav-link active">Review</a>
+            <a href="/rags" class="nav-link">Performance</a>
+            <a href="/static/settings.html" class="nav-link">Settings</a>
+            <select id="theme-selector" class="theme-select" style="margin-left: 1rem; padding: 0.25rem 0.5rem; font-size: 0.85rem; border-color: transparent; cursor: pointer; background: var(--bg-surface-hover);">
+                <option value="light">Light Theme</option>
+                <option value="dark">Dark Theme</option>
+                <option value="ocean">Ocean Theme</option>
+                <option value="forest">Forest Theme</option>
+            </select>
+        </div>
+    </nav>
+
+    <div class="page-container chat-layout" style="position: relative;">
+        <!-- Dynamic Background -->
+        <div class="dynamic-bg">
+            <div class="floating-shape s1"></div>
+            <div class="floating-shape s2"></div>
+            <div class="floating-shape s3"></div>
+        </div>
+
+        <div class="sidebar" style="position: relative; z-index: 2;">
+            <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;">
+                <h2 style="margin: 0; transform: translateY(-1px);">Quiz Review</h2>
+            </div>
+
+            <div class="sidebar-content" id="quiz-summary">
+                <!-- Quiz summary populated here -->
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem 0;">Loading quiz results...</div>
+            </div>
+        </div>
+
+        <div class="main-content" style="position: relative; z-index: 2; background-color: rgba(var(--bg-base-rgb), 0.85); backdrop-filter: blur(10px);">
+            <div class="chat-header">
+                <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">REVIEW TUTOR</div>
+            </div>
+
+            <div class="chat-area" id="chat-area">
+                <div class="message system-msg">
+                    <div class="avatar">N</div>
+                    <div class="bubble">Ask me about your last quiz. I can explain wrong answers and help with your weak topics.</div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper" style="flex-direction: column; align-items: stretch; gap: 0.5rem; background: transparent; border: none; padding: 0;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-base); border: 1px solid var(--border); border-radius: 4px; padding: 0.5rem;">
+                        <textarea id="message-input" rows="1" placeholder="Ask about your quiz results..." style="margin: 0; align-self: center;"></textarea>
+                        <button class="icon-btn send-btn" id="send-btn" title="Send Message">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/theme.js?v=3"></script>
+    <script src="/static/review.js?v=1"></script>
+</body>
+</html>

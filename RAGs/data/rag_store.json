@@ -1,0 +1,122 @@
+{
+  "courses": {
+    "f7bde767-b057-4694-9dcb-bf2cb9fd4cfe": {
+      "id": "f7bde767-b057-4694-9dcb-bf2cb9fd4cfe",
+      "name": "Speech and Language Processing Speech and Language Processing (3rd ed. draft) Da",
+      "url": "https://web.stanford.edu/~jurafsky/slp3/",
+      "content": "Speech and Language Processing Speech and Language Processing (3rd ed. draft) Dan Jurafsky and James H. Martin Here's our Jan 6, 2026 release! This release has is mainly a cleanup and bug-fixing release, with some updated figures for the transformer in various chapters.\nThe August release made larger changes, including DPO in chapter 9, new ASR and TTS chapters, a restructured LLM chapter, and\nunicode in Chapter 2. Individual chapters and updated slides are below. Here is a single pdf of Jan 6, 2026 book! Feel free to use the draft chapters and slides in your classes , print it out, whatever, the resulting feedback we get from you makes the book better! Typos and comments are very welcome (just email slp3edbugs@gmail.com and let us know the date on the draft)!\n(Don't bother reporting missing refs due to cross-chapter cross-reference problems  in the indvidual chapter pdfs, those are fixed in the full book draft) Gratitude! We've put up a list here of the amazing people who have sent so many fantastic suggestions and bug-fixes for improving the book.\nWe are really grateful to all of you for your help, the book would not be possible without you! How to cite the book : Daniel Jurafsky and James H. Martin. 2026.  Speech and Language Processing: An Introduction to Natural Language Processing, Computational Linguistics, and Speech Recognition with Language Models, 3rd edition. Online manuscript released January 6, 2026. https://web.stanford.edu/~jurafsky/slp3. A bib entry for the book is here . @Book{jm3,\n  author =       \"Daniel Jurafsky and James H. Martin\",\n  title =        \"Speech and Language Processing: An Introduction to Natural Language Processing, \n  \t\t  Computational Linguistics, and Speech Recognition,\n\t\t   with Language Models\",\n  year =         \"2026\",\n  url = {https://web.stanford.edu/~jurafsky/slp3/},\n  note = \"Online manuscript released January 6, 2026\",\n  edition =         \"3rd\",\n  } When will the book be finished?  Don't ask. If you need the previous Aug  2025 draft chapters, \nthey are here ;\nif you need the previous Jan 2025 draft chapters, \nthey are here ; Volume I: Large Language Models Chapter Slides 1: Introduction 2: Words and Tokens 2: Words and Tokens\n[ pptx ] \n[ pdf ]\n2: Edit Distance\n[ pptx ] \n[ pdf ] 3: N-gram Language Models 3: [ pptx ] \n[ pdf ] 4: Logistic Regression and Text Classification 4: [ pptx ] \n[ pdf ] 5: Embeddings 5: [ pptx ] \n[ pdf ] 6: Neural Networks 6: [ pptx ] [ pdf ] 7: Large Language Models 7: [ pptx ] [ pdf ] 8: Transformers 8: [ pptx ] \n[ pdf ] 9: Post-training: Instruction Tuning, Alignment, and Test-Time Compute 10: Masked Language Models 10: [ pptx ] [ pdf ] 11: Information Retrieval and Retrieval-Augmented Generation 11: [ pptx ] [ pdf ] 12: Machine Translation 13: RNNs and LSTMs 13: [ pptx ] [ pdf ] 14: Phonetics and Speech Feature Extraction 15: Automatic Speech Recognition 16: Text-to-Speech Volume II: Annotating Linguistic Structure Chapter Slides 17: Sequence Labeling for Parts of Speech and Named Entities 17: (Intro only) [ pptx ] [ pdf ] 18: Context-Free Grammars and Constituency Parsing 19: Dependency Parsing 20: Information Extraction: Relations, Events, and Time 21: Semantic Role Labeling and Argument Structure 22: Lexicons for Sentiment, Affect, and Connotation 23: Coreference Resolution and Entity Linking 24: Discourse Coherence 25: Conversation and its Structure Appendix (will be just on the web) A: Hidden Markov Models B: Naive Bayes Classification B: [ pptx ] \n[ pdf ] C: Kneser-Ney Smoothing D: Spelling Correction and the Noisy Channel E: Statistical Constituency Parsing F: Context-Free Grammars G: Combinatory Categorial Grammar H: Logical Representations of Sentence Meaning I: Word Senses and WordNet J: PPMI K: Frame-based Dialogue Systems",
+      "topics": {
+        "6c3976f0-171b-4bcd-a691-f34131e46e28": {
+          "id": "6c3976f0-171b-4bcd-a691-f34131e46e28",
+          "name": "Topic 1",
+          "summary": "Speech and Language Processing Speech and Language Processing (3rd ed. draft) Dan Jurafsky and James H. Martin Here's our Jan 6, 2026 releas..."
+        },
+        "4b409a1f-b3ec-43c9-b6f1-2b6b0af133b9": {
+          "id": "4b409a1f-b3ec-43c9-b6f1-2b6b0af133b9",
+          "name": "Topic 2",
+          "summary": "whatever, the resulting feedback we get from you makes the book better! Typos and comments are very welcome (just email slp3edbugs@gmail.com..."
+        },
+        "fcc2e3a0-914e-4840-ac19-ae0e15a3a238": {
+          "id": "fcc2e3a0-914e-4840-ac19-ae0e15a3a238",
+          "name": "Topic 3",
+          "summary": ": Daniel Jurafsky and James H. Martin. 2026. Speech and Language Processing: An Introduction to Natural Language Processing, Computational L..."
+        },
+        "587c1682-d128-4329-b8b6-ca40e8d5279e": {
+          "id": "587c1682-d128-4329-b8b6-ca40e8d5279e",
+          "name": "Topic 4",
+          "summary": "need the previous Aug 2025 draft chapters, they are here ; if you need the previous Jan 2025 draft chapters, they are here ; Volume I: Large..."
+        },
+        "3087ab3c-9ca5-449e-a0dd-bbd9abf22008": {
+          "id": "3087ab3c-9ca5-449e-a0dd-bbd9abf22008",
+          "name": "Topic 5",
+          "summary": "Language Models 7: [ pptx ] [ pdf ] 8: Transformers 8: [ pptx ] [ pdf ] 9: Post-training: Instruction Tuning, Alignment, and Test-Time Compu..."
+        },
+        "97bc01ff-198b-436f-8cc3-6ac58eb13e99": {
+          "id": "97bc01ff-198b-436f-8cc3-6ac58eb13e99",
+          "name": "Topic 6",
+          "summary": "] 18: Context-Free Grammars and Constituency Parsing 19: Dependency Parsing 20: Information Extraction: Relations, Events, and Time 21: Sema..."
+        }
+      }
+    },
+    "b6c9f1e8-0add-4cc7-a689-7a2eb6447dc2": {
+      "id": "b6c9f1e8-0add-4cc7-a689-7a2eb6447dc2",
+      "name": "Text Mining master course 2025-2026 Course schedule Studiegids Brightspace TMR h",
+      "url": "https://tmr.liacs.nl/TM.html",
+      "content": "Text Mining master course 2025-2026 Course schedule Studiegids Brightspace TMR home Text Mining 2025-2026 Teacher: Suzan Verberne Teaching assistants : Yumeng Wang, Jujia Zhao, Yinzhi Xie, Jiayi Tian, Ruzanna Baghdasaryan Contact address : tmcourse@liacs.leidenuniv.nl Course schedule The course weeks consist of: a lecture, literature to read, and either a practical exercise (tutorial style) or a hand-in assignment. The lectures are on Wednesday (times and locations differ throughout the semester, please check your timetable ) . The literature will be distributed on Brightspace. The majority of the chapters comes from this book, abbreviated as J&M in the course schedule below. J&M: Dan Jurafsky and James H. Martin, Speech and Language Processing (3rd ed), 2025 Week Lecture Literature Exercise / assignment 1 (3 Sept) Introduction 2 (10 Sept) Text processing J&M chapter 2. Words and Tokens Exercise: Chapter 1 of \"Advanced NLP with Spacy\" 3 (17 Sept) Vector Semantics J&M chapter 5. Embeddings Exercise: Chapter 2 of \"Advanced NLP with Spacy\", sections 8-15 4 (24 Sept) Text categorization J&M chapter 4. Naive Bayes, Text Classification, and Sentiment (JAN '25 EDITION) Exercise: Sections 6.2.3. Text feature extraction and Classification of text documents of the scikit-learn user guide 5 (1 Oct) Data collection and annotation Lim et al. (2020) Annotating and Analyzing Biased Sentences in News Articles using Crowdsourcing Assignment 1. Text classification (deadline 7 October) 6 (8 Oct) Transformer models & transfer learning J&M chapter 8. Transformers J&M chapter 10 Masked Language Models Exercise: Chapters 2 and 3 of the Huggingface NLP course (15 Oct) No lecture 7 (22 Oct) Generative large language models J&M chapter 7. Large Language Models Exercise: Generation with LLMs HuggingFace tutorial 8 (19 Oct) Information Extraction J&M chapter 17. Sequence Labeling for Parts of Speech and Named Entities Exercise: Token classification tutorial in the Huggingface NLP course 9 (5 Nov) Topic Modelling & Text summarization J&M chapter 9. Post-training: Instruction Tuning, Alignment, and Test-Time Compute Exercise: Summarization tutorial in the Huggingface NLP course 10 (12 Nov) Sentiment analysis Scaria et al. (2024) InstructABSA: Instruction Learning for Aspect Based Sentiment Analysis. Assignment 2. Information Extraction (deadline 18 November) 11 (19 Nov) Text Mining in practice (guest lecture) Paper reading for the final assignment 12 (26 Nov) Conclusions and exam preparation 13 (3 Dec) Online lab session Final assignment (deadline 5 January) (17 Dec) Written exam (28 Jan) Re-sit The assessment of the course consists of a written exam (50% of course grade) and practical assignments (50% of course grade). The practical assignments comprise two smaller assignments (10% each) and one large final assignment (30%). The grade for the written exam should be 5.5 or higher in order to complete the course. The weighted average grade for the practical assignments should be 5.5 or higher in order to complete the course. If one of the tasks is not submitted the grade for that task is 0. Each assignment has a re-sit opportunity (a later submission). The maximum grade for a re-sit assignment is 6. Group work is an integral part of the course. You will be expected to complete the assignments together with a team mate. Earlier editions of this course Link to the course page for this course in 2024-2025 Link to the course page for this course in 2023-2024 Link to the course page for this course in 2022-2023 Link to the course page for this course in 2021-2022 Link to the course page for this course in 2020-2021 Link to the course page for this course in 2019-2020 Link to the course page for this course in 2018-2019 Ontwerp: Free CSS Templates .",
+      "topics": {
+        "b0adae10-0cf7-43aa-8614-ebfa91dc609e": {
+          "id": "b0adae10-0cf7-43aa-8614-ebfa91dc609e",
+          "name": "Topic 1",
+          "summary": "Text Mining master course 2025-2026 Course schedule Studiegids Brightspace TMR home Text Mining 2025-2026 Teacher: Suzan Verberne Teaching a..."
+        },
+        "7eb70faf-1312-4904-a5e2-28729d89437a": {
+          "id": "7eb70faf-1312-4904-a5e2-28729d89437a",
+          "name": "Topic 2",
+          "summary": "J&M: Dan Jurafsky and James H. Martin, Speech and Language Processing (3rd ed), 2025 Week Lecture Literature Exercise / assignment 1 (3 Sept..."
+        },
+        "59dc59ef-bb18-4d4b-a814-b16885d2c2f5": {
+          "id": "59dc59ef-bb18-4d4b-a814-b16885d2c2f5",
+          "name": "Topic 3",
+          "summary": "collection and annotation Lim et al. (2020) Annotating and Analyzing Biased Sentences in News Articles using Crowdsourcing Assignment 1. Tex..."
+        },
+        "f9836234-137e-4569-ae96-5f21c69bc3c9": {
+          "id": "f9836234-137e-4569-ae96-5f21c69bc3c9",
+          "name": "Topic 4",
+          "summary": "NLP course 9 (5 Nov) Topic Modelling & Text summarization J&M chapter 9. Post-training: Instruction Tuning, Alignment, and Test-Time Compute..."
+        },
+        "032b5e43-c0c7-4ee9-8935-91cc5f3f5cc3": {
+          "id": "032b5e43-c0c7-4ee9-8935-91cc5f3f5cc3",
+          "name": "Topic 5",
+          "summary": "a written exam (50% of course grade) and practical assignments (50% of course grade). The practical assignments comprise two smaller assignm..."
+        },
+        "fb6a1598-4bc6-4099-af46-469603265e35": {
+          "id": "fb6a1598-4bc6-4099-af46-469603265e35",
+          "name": "Topic 6",
+          "summary": "work is an integral part of the course. You will be expected to complete the assignments together with a team mate. Earlier editions of this..."
+        }
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "82f354ee-9fa7-4ae2-a082-c857a63268ed",
+      "course_id": "f7bde767-b057-4694-9dcb-bf2cb9fd4cfe",
+      "topic_id": "6c3976f0-171b-4bcd-a691-f34131e46e28",
+      "correct": 2,
+      "total": 5,
+      "score": 0.4,
+      "date": "2026-06-12",
+      "timestamp": "2026-06-12T12:53:22.570671"
+    },
+    {
+      "id": "2db42ed2-e97b-4bcd-86c0-a49d473898fc",
+      "course_id": "f7bde767-b057-4694-9dcb-bf2cb9fd4cfe",
+      "topic_id": "4b409a1f-b3ec-43c9-b6f1-2b6b0af133b9",
+      "correct": 5,
+      "total": 5,
+      "score": 1.0,
+      "date": "2026-06-12",
+      "timestamp": "2026-06-12T12:53:39.672967"
+    },
+    {
+      "id": "a94e8b19-7d3d-4919-9c83-a96e572b9bc2",
+      "course_id": "b6c9f1e8-0add-4cc7-a689-7a2eb6447dc2",
+      "topic_id": "b0adae10-0cf7-43aa-8614-ebfa91dc609e",
+      "correct": 5,
+      "total": 5,
+      "score": 1.0,
+      "date": "2026-06-12",
+      "timestamp": "2026-06-12T12:55:19.041192"
+    },
+    {
+      "id": "47ed5fd0-c86e-4e28-9f6d-fddad3c2eaef",
+      "course_id": "b6c9f1e8-0add-4cc7-a689-7a2eb6447dc2",
+      "topic_id": "7eb70faf-1312-4904-a5e2-28729d89437a",
+      "correct": 2,
+      "total": 5,
+      "score": 0.4,
+      "date": "2026-06-12",
+      "timestamp": "2026-06-12T12:55:37.304247"
+    }
+  ]
+}

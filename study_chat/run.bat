@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 echo ==============================================
 echo       Starting Nexus AI Study Companion
 echo ==============================================
@@ -9,12 +10,11 @@ IF NOT EXIST venv (
     python -m venv venv
 )
 
-echo [2/3] Activating environment and installing dependencies...
-call venv\Scripts\activate.bat
-pip install -r requirements.txt
+echo [2/3] Installing dependencies...
+venv\Scripts\python.exe -m pip install -r requirements.txt
 
 echo [3/3] Starting the Server...
 echo The app will be available at: http://127.0.0.1:8000/static/index.html
 echo Press CTRL+C to stop the server.
 echo.
-uvicorn main:app --reload
+venv\Scripts\python.exe -m uvicorn main:app --reload

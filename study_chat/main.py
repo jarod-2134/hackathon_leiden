@@ -12,10 +12,6 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 from pypdf import PdfReader
-from transformers import pipeline
-
-from scripts.scraper import scrape_web_files
-from scripts.summariser import summariser
 
 COURSE_CONTENT = (
     "Introduction to Quantum Computing: This course covers the fundamental concepts of quantum mechanics applied to "
@@ -28,6 +24,9 @@ COURSE_CONTENT = (
 
 CURRENT_QUIZ: Dict[str, dict] = {} # Deprecated, use QUIZ_STORE
 QUIZ_STORE: Dict[str, dict] = {}
+
+# Stores the most recent graded quiz result so the Review RAG chat can reason over it.
+LAST_QUIZ_RESULT: Optional[dict] = None
 
 from drive_service import extract_drive_content
 from github_service import extract_github_content
@@ -258,17 +257,67 @@ def clean_and_parse_json(text: str) -> dict:
     return json.loads(text.strip())
 
 TOPIC_MAP = {
-    "mc1": "Qubits and basic quantum states",
-    "mc2": "Quantum superposition principles",
-    "mc3": "Shor's factoring algorithm",
-    "mc4": "Grover's search algorithm",
-    "mc5": "Quantum entanglement mechanics",
-    "oe1": "Classical-quantum bit boundaries",
-    "oe2": "Quantum entanglement significance",
-    "oe3": "Shor's factoring algorithm in cryptography",
-    "oe4": "Grover's search algorithm complexity speedups",
-    "oe5": "Quantum gates and circuit configurations"
+    "mc1": "Qubits",
+    "mc2": "Superposition",
+    "mc3": "Shor's Algorithm",
+    "mc4": "Grover's Algorithm",
+    "mc5": "Entanglement",
+    "oe1": "Bits vs Qubits",
+    "oe2": "Entanglement Uses",
+    "oe3": "Shor and Cryptography",
+    "oe4": "Grover Speedups",
+    "oe5": "Quantum Circuits"
 }
+
+# Short, node-friendly labels for the Performance Network graph.
+SHORT_TOPIC_MAP = {
+    "mc1": "Qubits",
+    "mc2": "Superposition",
+    "mc3": "Shor",
+    "mc4": "Grover",
+    "mc5": "Entanglement",
+    "oe1": "Bit vs Qubit",
+    "oe2": "Entanglement",
+    "oe3": "Shor + Crypto",
+    "oe4": "Grover Speedup",
+    "oe5": "Circuits",
+}
+
+# Groups the quiz topics into lectures so the Performance Network can show
+# topics organised "per lecture" under the Quantum Computing course.
+QUANTUM_STRUCTURE = {
+    "course_id": "quantum-computing",
+    "course_name": "Introduction to Quantum Computing",
+    "lectures": [
+        {
+            "name": "Lecture 1 — Quantum Foundations",
+            "topics": ["mc1", "mc2", "mc5", "oe1", "oe2"],
+        },
+        {
+            "name": "Lecture 2 — Quantum Algorithms",
+            "topics": ["mc3", "mc4", "oe3", "oe4"],
+        },
+        {
+            "name": "Lecture 3 — Quantum Circuits",
+            "topics": ["oe5"],
+        },
+    ],
+}
+
+# Running per-topic performance, keyed by the topic id used in TOPIC_MAP.
+# Each value accumulates { "score_sum": float, "attempts": int } across quizzes.
+TOPIC_PERFORMANCE: Dict[str, dict] = {}
+
+
+def rag_status(score: Optional[float]) -> str:
+    """Red / Amber / Green traffic-light status from a 0-100 score."""
+    if score is None:
+        return "grey"
+    if score >= 75:
+        return "green"
+    if score >= 50:
+        return "amber"
+    return "red"
 
 def get_fallback_quiz(test_type: str, num_questions: int, num_open_questions: Optional[int] = None) -> dict:
     mc_pool = [
@@ -725,7 +774,7 @@ async def submit_quiz(req: QuizSubmitRequest):
             "weak_points": weak_bullets
         }
 
-    return {
+    result = {
         "overall_score_pct": overall_score,
         "multiple_choice": {
             "correct": mc_correct,
@@ -739,8 +788,31 @@ async def submit_quiz(req: QuizSubmitRequest):
         "questions_analysis": analysis_list
     }
 
+    # Persist for the Review RAG chat page.
+    global LAST_QUIZ_RESULT
+    LAST_QUIZ_RESULT = result
+
+    # Record per-topic performance for the RAG Performance Network.
+    for item in analysis_list:
+        topic_id = item["id"]
+        if topic_id not in TOPIC_MAP:
+            continue  # only map known fallback topics
+        if item["type"] == "multiple_choice":
+            item_score = 100.0 if item.get("is_correct") else 0.0
+        else:
+            item_score = float(item.get("grade_score", 0))
+        rec = TOPIC_PERFORMANCE.setdefault(topic_id, {"score_sum": 0.0, "attempts": 0, "last_feedback": "", "last_question": ""})
+        rec["score_sum"] += item_score
+        rec["attempts"] += 1
+        rec["last_feedback"] = item.get("feedback", "")
+        rec["last_question"] = item.get("question", "")
+
+    return result
+
+
 @app.post("/api/scrape")
 def scrape_books(scrape_req: ScrapeRequest):
+    from scripts.scraper import scrape_web_files  # lazy import: requires playwright
     TARGET_URL = scrape_req.url
     OUTPUT_DIR = scrape_req.output_dir
     SUBJECT = scrape_req.subject or "General"
@@ -749,11 +821,220 @@ def scrape_books(scrape_req: ScrapeRequest):
 
 @app.get("/api/summarize")
 def summarize_all():
+    from scripts.summariser import summariser  # lazy import: requires transformers
     summariser()
     return {"status": "success", "message": "Summarization complete. Check server logs for details."}
 
 @app.get("/api/get_model")
 def get_model():
+    from transformers import pipeline  # lazy import: heavy optional dependency
     pipe = pipeline("text-generation", model="facebook/bart-large-cnn", device="cpu")
     pipe.save_pretrained("./local_model")
     return {"status": "success", "message": "Model downloaded and saved locally."}
+
+
+# --- REVIEW RAG (chat grounded on the last quiz result) ---
+
+class QuizChatRequest(BaseModel):
+    messages: List[Message]
+
+
+def build_quiz_context(result: dict) -> str:
+    """Flatten the graded quiz result into a text context the RAG chat reasons over."""
+    lines = []
+    lines.append(f"Overall score: {result.get('overall_score_pct')}%")
+
+    mc = result.get("multiple_choice")
+    if mc:
+        lines.append(f"Multiple choice: {mc.get('correct')}/{mc.get('total')} correct ({mc.get('score_pct')}%)")
+    oe = result.get("open_ended")
+    if oe:
+        lines.append(f"Open-ended average: {oe.get('score_pct')}%")
+
+    fs = result.get("feedback_summary", {}) or {}
+    strong = fs.get("strong_points") or []
+    weak = fs.get("weak_points") or []
+    if strong:
+        lines.append("Strong points: " + "; ".join(strong if isinstance(strong, list) else [str(strong)]))
+    if weak:
+        lines.append("Weak points: " + "; ".join(weak if isinstance(weak, list) else [str(weak)]))
+
+    lines.append("\nQuestion-by-question breakdown:")
+    for i, q in enumerate(result.get("questions_analysis", []), 1):
+        lines.append(f"\nQ{i} [{q.get('type')}]: {q.get('question')}")
+        lines.append(f"  Student answer: {q.get('user_answer') or '(blank)'}")
+        lines.append(f"  Correct / ideal answer: {q.get('correct_answer')}")
+        if q.get("type") == "open_ended":
+            lines.append(f"  Grade: {q.get('grade_score')}/100")
+        else:
+            lines.append(f"  Result: {'correct' if q.get('is_correct') else 'incorrect'}")
+        if q.get("feedback"):
+            lines.append(f"  Feedback: {q.get('feedback')}")
+
+    return "\n".join(lines)
+
+
+@app.get("/api/quiz/results")
+def get_quiz_results():
+    """Return the last graded quiz result so the Review page can show a summary sidebar."""
+    if not LAST_QUIZ_RESULT:
+        return {"available": False}
+    return {"available": True, "result": LAST_QUIZ_RESULT}
+
+
+@app.post("/api/quiz/chat")
+async def quiz_chat(request: QuizChatRequest):
+    if not LAST_QUIZ_RESULT:
+        raise HTTPException(
+            status_code=400,
+            detail="No quiz results found yet. Take a quiz first, then come back to review it."
+        )
+
+    context_text = build_quiz_context(LAST_QUIZ_RESULT)
+    system_prompt = (
+        "You are a personal study tutor reviewing a student's most recent quiz with them. "
+        "Use ONLY the quiz results below as your ground truth about what the student answered and how they did. "
+        "Help them understand the questions they got wrong, reinforce their weak topics, and explain concepts clearly. "
+        "Be encouraging and specific. If they ask about something not covered by the quiz, you may explain the underlying "
+        "quantum-computing concept, but always tie it back to their performance.\n\n"
+        f"QUIZ RESULTS:\n{context_text}"
+    )
+
+    messages = [{"role": "system", "content": system_prompt}]
+    for msg in request.messages:
+        messages.append({"role": msg.role, "content": msg.content})
+
+    try:
+        response = client.chat.completions.create(
+            model="grok-beta",
+            messages=messages,
+            temperature=0.4
+        )
+        return {"role": "assistant", "content": response.choices[0].message.content}
+    except Exception as e:
+        # Fallback for hackathon testing without a valid API key: summarise the
+        # quiz locally so the Review page still works offline.
+        wrong = [
+            q for q in LAST_QUIZ_RESULT.get("questions_analysis", [])
+            if not q.get("is_correct", False)
+        ]
+        wrong_lines = "\n".join(
+            f"- {q.get('question')} (your answer: {q.get('user_answer') or 'blank'}; "
+            f"correct/ideal: {q.get('correct_answer')})"
+            for q in wrong
+        ) or "None — you got everything correct!"
+        return {
+            "role": "assistant",
+            "content": (
+                "[OFFLINE REVIEW] The LLM API is unavailable, so here is a direct readout of your quiz "
+                f"(overall score {LAST_QUIZ_RESULT.get('overall_score_pct')}%).\n\n"
+                f"Questions to review:\n{wrong_lines}"
+            )
+        }
+
+
+@app.get("/review")
+def read_review():
+    return FileResponse("static/review.html")
+
+
+# --- RAG PERFORMANCE NETWORK (Red / Amber / Green topic mastery) ---
+
+RAG_STORE_PATH = os.path.join(os.path.dirname(__file__), "..", "RAGs", "data", "rag_store.json")
+
+
+def load_rag_store() -> dict:
+    try:
+        with open(RAG_STORE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {"courses": {}}
+
+
+def rollup_status(child_statuses: List[str]) -> str:
+    """Worst-of rollup so a course/lecture flags red if any topic is red."""
+    graded = [s for s in child_statuses if s != "grey"]
+    if not graded:
+        return "grey"
+    if "red" in graded:
+        return "red"
+    if "amber" in graded:
+        return "amber"
+    return "green"
+
+
+@app.get("/api/rags/performance")
+def get_rag_performance():
+    """Course -> lecture -> topic tree with Red/Amber/Green status from quiz performance."""
+    courses = []
+
+    # 1) Quantum Computing course with REAL quiz performance per topic.
+    q_lectures = []
+    q_topic_statuses = []
+    for lec in QUANTUM_STRUCTURE["lectures"]:
+        topics = []
+        lec_statuses = []
+        for tid in lec["topics"]:
+            rec = TOPIC_PERFORMANCE.get(tid)
+            if rec and rec["attempts"] > 0:
+                score = round(rec["score_sum"] / rec["attempts"])
+                attempts = rec["attempts"]
+                feedback = rec.get("last_feedback", "")
+            else:
+                score = None
+                attempts = 0
+                feedback = ""
+            status = rag_status(score)
+            lec_statuses.append(status)
+            q_topic_statuses.append(status)
+            topics.append({
+                "id": tid,
+                "name": TOPIC_MAP[tid],
+                "short_name": SHORT_TOPIC_MAP.get(tid, TOPIC_MAP[tid]),
+                "score": score,
+                "status": status,
+                "attempts": attempts,
+                "feedback": feedback,
+            })
+        q_lectures.append({
+            "name": lec["name"],
+            "status": rollup_status(lec_statuses),
+            "topics": topics,
+        })
+    courses.append({
+        "id": QUANTUM_STRUCTURE["course_id"],
+        "name": QUANTUM_STRUCTURE["course_name"],
+        "status": rollup_status(q_topic_statuses),
+        "assessed": any(s != "grey" for s in q_topic_statuses),
+        "lectures": q_lectures,
+    })
+
+    # 2) Scraped courses from the RAG store (topics not yet quiz-assessed).
+    store = load_rag_store()
+    for cid, course in (store.get("courses") or {}).items():
+        topics = []
+        for tid, topic in (course.get("topics") or {}).items():
+            topics.append({
+                "id": tid,
+                "name": topic.get("name", "Topic"),
+                "short_name": topic.get("name", "Topic"),
+                "score": None,
+                "status": "grey",
+                "attempts": 0,
+                "feedback": (topic.get("summary") or "")[:300],
+            })
+        courses.append({
+            "id": cid,
+            # Trim very long scraped names for display.
+            "name": (course.get("name") or "Course")[:60],
+            "status": "grey",
+            "assessed": False,
+            "lectures": [{"name": "Course Topics", "status": "grey", "topics": topics}],
+        })
+
+    return {"courses": courses}
+
+
+@app.get("/rags")
+def read_rags():
+    return FileResponse("static/rags.html")
