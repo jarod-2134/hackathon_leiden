@@ -76,6 +76,11 @@ class ChatRequest(BaseModel):
     search_web: bool = False
     course: str = "General"
 
+class ScrapeRequest(BaseModel):
+    url: str
+    output_dir: str
+    subject: Optional[str] = None
+
 class CourseRequest(BaseModel):
     name: str
 
