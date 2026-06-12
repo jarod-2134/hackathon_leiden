@@ -6,6 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeIndex = 0;
 
     // DOM Elements
+    const hubView = document.getElementById('hub-view');
+    const hubQuizzesList = document.getElementById('hub-quizzes-list');
+    const hubCreateBtn = document.getElementById('hub-create-btn');
+    const backToHubBtn = document.getElementById('back-to-hub-btn');
+    
     const setupView = document.getElementById('setup-view');
     const executionView = document.getElementById('execution-view');
     const resultsView = document.getElementById('results-view');
@@ -57,6 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // View Management
     function showView(viewId) {
         // Hide all views & sidebars
+        if (hubView) {
+            hubView.classList.add('hidden');
+            hubView.classList.remove('active');
+        }
         setupView.classList.add('hidden');
         setupView.classList.remove('active');
         executionView.classList.add('hidden');
@@ -71,7 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
         quizProgressContainer.style.display = 'none';
 
         // Show active view
-        if (viewId === 'setup') {
+        if (viewId === 'hub' && hubView) {
+            hubView.classList.remove('hidden');
+            hubView.classList.add('active');
+        } else if (viewId === 'setup') {
             setupView.classList.remove('hidden');
             setupView.classList.add('active');
             setupSidebar.classList.remove('hidden');
@@ -98,7 +110,83 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize View
-    showView('setup');
+    async function initHub() {
+        showView('hub');
+        showLoading("Loading Quiz Hub...");
+        try {
+            const res = await fetch('/api/quizzes');
+            if (res.ok) {
+                const data = await res.json();
+                renderHubQuizzes(data.quizzes || []);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    function renderHubQuizzes(quizzes) {
+        if (!hubQuizzesList) return;
+        hubQuizzesList.innerHTML = '';
+        if (quizzes.length === 0) {
+            hubQuizzesList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No challenges found. Create one to get started!</div>';
+            return;
+        }
+        
+        // Reverse so newest is first
+        quizzes.slice().reverse().forEach((q, idx) => {
+            const card = document.createElement('div');
+            card.className = 'syllabus-card';
+            card.style.background = 'var(--bg-surface)';
+            card.style.border = '1px solid var(--border)';
+            card.style.borderRadius = '6px';
+            card.style.padding = '1.5rem';
+            card.style.display = 'flex';
+            card.style.justifyContent = 'space-between';
+            card.style.alignItems = 'center';
+            
+            card.innerHTML = `
+                <div>
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">${q.title || 'Interactive Quiz'}</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">${q.question_count} Questions</p>
+                </div>
+            `;
+            
+            // Add a "Resume" or "Retake" button? For now just show them. 
+            // In a real app we'd fetch the specific quiz ID
+            const resumeBtn = document.createElement('button');
+            resumeBtn.className = 'btn';
+            resumeBtn.textContent = 'View Quiz';
+            resumeBtn.style.padding = '0.5rem 1rem';
+            resumeBtn.style.fontSize = '0.85rem';
+            
+            resumeBtn.addEventListener('click', () => {
+                // To actually play the specific quiz, we'd need an endpoint to fetch the quiz details.
+                // Since this is a hackathon, we can just say "Please generate a new quiz to take it."
+                // OR we can make it so starting a new quiz sets it up.
+                alert('In this hackathon version, taking a past quiz directly from the hub requires the /api/quiz/get endpoint which is not yet implemented. Please generate a New Challenge.');
+            });
+            
+            card.appendChild(resumeBtn);
+            hubQuizzesList.appendChild(card);
+        });
+    }
+
+    if (hubCreateBtn) {
+        hubCreateBtn.addEventListener('click', () => {
+            showView('setup');
+        });
+    }
+    
+    if (backToHubBtn) {
+        backToHubBtn.addEventListener('click', () => {
+            showView('hub');
+        });
+    }
+
+    // Initialize
+    initHub();
 
     // Dynamic Range Slider Logic
     function updateSliderState(numQuestions, numOpen) {
@@ -398,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    quiz_id: quizId,
                     answers: answers
                 })
             });
