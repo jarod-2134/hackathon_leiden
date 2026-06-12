@@ -317,8 +317,8 @@ async def chat(
         inline_quiz = None
         if request.auto_quiz:
             try:
-                quiz_req = QuizGenerateRequest(test_type="multiple_choice", num_questions=1)
-                inline_quiz = await generate_quiz(quiz_req)
+                quiz_req = QuizGenerateRequest(test_type="multiple_choice", num_questions=1, course=request.course)
+                inline_quiz = await generate_quiz(quiz_req, x_session_id=x_session_id)
                 if inline_quiz and "quiz_id" in inline_quiz:
                     QUIZ_STORE[inline_quiz["quiz_id"]]["title"] = f"Mini Quiz: {request.course}"
             except Exception as e:
@@ -342,11 +342,7 @@ async def chat(
 
 # --- QUIZ ROUTING & LOGIC ---
 
-class QuizGenerateRequest(BaseModel):
-    test_type: str  # "multiple_choice", "open_ended", "mixed"
-    duration: Optional[int] = None   # in minutes
-    num_questions: int
-    num_open_questions: Optional[int] = None
+
 
 class QuizSubmitRequest(BaseModel):
     quiz_id: Optional[str] = None
@@ -631,7 +627,6 @@ async def generate_quiz(
         
     return {
         "quiz_id": quiz_id,
-        "duration": req.duration,
         "questions": client_questions
     }
 
